@@ -22,6 +22,7 @@ export interface Patient {
   condition: string;
   lastActivity: string;
   avatarColor: string;
+  avatarUrl?: string; // New field for patient photo
   messages: Message[];
   reminders: Reminder[];
 }

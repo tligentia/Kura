@@ -102,27 +102,27 @@ export const Shell: React.FC<ShellProps> = ({
   }, [initializeSystem]);
 
   return (
-    <div className={`min-h-screen ${COLORS.bg} font-sans flex flex-col p-4 md:p-8 animate-in fade-in duration-700`}>
-      {/* HEADER DINÁMICO */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md mb-8 border-b border-gray-100 pb-6 pt-4 flex flex-col md:flex-row gap-4 justify-between items-center px-2">
+    <div className={`min-h-screen ${COLORS.bg} font-sans flex flex-col p-0 animate-in fade-in duration-700`}>
+      {/* HEADER DINÁMICO - Removed md:p-8 from root to avoid frame effect */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 pb-4 pt-4 flex flex-col md:flex-row gap-4 justify-between items-center px-6">
         <div className="w-full md:w-auto flex justify-between md:justify-start items-center">
           <div>
-            <h1 className="text-3xl font-black tracking-tighter text-gray-900 flex items-center gap-2">
-              <Activity className="text-indigo-600" size={32} />
+            <h1 className="text-2xl font-black tracking-tighter text-gray-900 flex items-center gap-2">
+              <Activity className="text-indigo-600" size={28} />
               Kurae<span className="text-red-700"> +</span>
             </h1>
-            <div className="flex items-center gap-4 mt-1">
+            <div className="flex items-center gap-4 mt-0.5">
               <div className="flex items-center gap-1.5">
                 {isKeyValid === true ? (
-                  <span className="flex items-center gap-1 text-[9px] font-black text-green-600 uppercase tracking-widest bg-green-50 px-2 py-0.5 rounded-md border border-green-100 animate-in fade-in zoom-in">
+                  <span className="flex items-center gap-1 text-[8px] font-black text-green-600 uppercase tracking-widest bg-green-50 px-2 py-0.5 rounded-md border border-green-100 animate-in fade-in zoom-in">
                     <CheckCircle2 size={10} /> AI ONLINE
                   </span>
                 ) : isKeyValid === false ? (
-                  <span className="flex items-center gap-1 text-[9px] font-black text-red-700 uppercase tracking-widest bg-red-50 px-2 py-0.5 rounded-md border border-red-100 animate-pulse cursor-help">
+                  <span className="flex items-center gap-1 text-[8px] font-black text-red-700 uppercase tracking-widest bg-red-50 px-2 py-0.5 rounded-md border border-red-100 animate-pulse cursor-help">
                     <AlertCircle size={10} /> AI OFFLINE
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1 text-[9px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-2 py-0.5 rounded-md">
+                  <span className="flex items-center gap-1 text-[8px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-2 py-0.5 rounded-md">
                     <Sparkles size={10} className="animate-spin text-red-700" /> SYNCING
                   </span>
                 )}
@@ -132,64 +132,63 @@ export const Shell: React.FC<ShellProps> = ({
         </div>
 
         {/* CONTROLES CENTRALES: Modo + Vista */}
-        <div className="flex items-center gap-3 bg-gray-50 p-1.5 pr-2 rounded-full border border-gray-200 shadow-sm backdrop-blur-sm">
-            {/* Selector Doctor/Paciente */}
+        <div className="flex items-center gap-3 bg-gray-50 p-1 rounded-full border border-gray-200 shadow-sm backdrop-blur-sm">
             <div className="flex bg-gray-200/50 rounded-full p-1">
                 <button 
                     onClick={() => onViewModeChange('doctor')}
-                    className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${viewMode === 'doctor' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:text-indigo-600'}`}
+                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${viewMode === 'doctor' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:text-indigo-600'}`}
                 >
-                    <Stethoscope size={14} /> <span className="hidden sm:inline">Doctor</span>
+                    <Stethoscope size={12} /> <span className="hidden sm:inline">Doctor</span>
                 </button>
                 <button 
                     onClick={() => onViewModeChange('patient')}
-                    className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${viewMode === 'patient' ? 'bg-teal-500 text-white shadow-md' : 'text-gray-500 hover:text-teal-600'}`}
+                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${viewMode === 'patient' ? 'bg-teal-500 text-white shadow-md' : 'text-gray-500 hover:text-teal-600'}`}
                 >
-                    <Heart size={14} /> <span className="hidden sm:inline">Paciente</span>
+                    <Heart size={12} /> <span className="hidden sm:inline">Paciente</span>
                 </button>
             </div>
 
-            <div className="h-6 w-px bg-gray-300 mx-1"></div>
+            <div className="h-4 w-px bg-gray-300 mx-0.5"></div>
 
-            {/* Selector Vista Web/Móvil */}
             <button
                 onClick={onToggleMobileView}
-                className={`p-2.5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 ${isMobileView ? 'bg-gray-900 text-white shadow-lg' : 'text-gray-400 hover:text-gray-900 hover:bg-white'}`}
+                className={`p-2 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 ${isMobileView ? 'bg-gray-900 text-white shadow-lg' : 'text-gray-400 hover:text-gray-900 hover:bg-white'}`}
                 title={isMobileView ? "Cambiar a Vista Web" : "Cambiar a Vista Móvil"}
             >
-                {isMobileView ? <Monitor size={16} /> : <Smartphone size={16} />}
+                {isMobileView ? <Monitor size={14} /> : <Smartphone size={14} />}
             </button>
         </div>
 
-        <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+        <div className="flex items-center gap-2 w-full md:w-auto justify-end">
           <button
             onClick={() => setShowManual(true)}
-            className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-900 px-4 py-2 rounded-xl transition-all active:scale-95 group shadow-sm"
+            className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-900 px-3 py-2 rounded-xl transition-all active:scale-95 group shadow-sm"
           >
-            <HelpCircle size={18} className="text-red-700 group-hover:scale-110 transition-transform" />
-            <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Manual</span>
+            <HelpCircle size={16} className="text-red-700 group-hover:scale-110 transition-transform" />
+            <span className="text-[9px] font-black uppercase tracking-widest hidden sm:inline">Manual</span>
           </button>
           <AppMenu />
         </div>
       </header>
 
-      {/* ÁREA DE CONTENIDO PRINCIPAL */}
-      <main className={`flex-1 mx-auto w-full flex flex-col items-center transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${
-          isMobileView ? 'max-w-[400px]' : 'max-w-7xl'
+      {/* ÁREA DE CONTENIDO PRINCIPAL - Removed mx-auto and max-w-7xl to eliminate the outer frame */}
+      <main className={`flex-1 w-full flex flex-col items-center transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+          isMobileView ? 'max-w-[420px] mx-auto mt-4' : 'max-w-none'
       }`}>
-        <div className={`w-full transition-all duration-500 ${isMobileView ? 'scale-[0.98] origin-top' : ''}`}>
+        <div className={`w-full h-full transition-all duration-500 ${isMobileView ? 'scale-[0.98] origin-top border border-gray-200 rounded-[3rem] overflow-hidden shadow-2xl' : ''}`}>
            {children}
         </div>
       </main>
 
       {/* FOOTER CORPORATIVO */}
-      <Footer
-        userIp={userIp}
-        onShowCookies={() => setShowCookies(true)}
-        onShowAjustes={() => setShowAjustes(true)}
-      />
+      <div className="px-6">
+        <Footer
+          userIp={userIp}
+          onShowCookies={() => setShowCookies(true)}
+          onShowAjustes={() => setShowAjustes(true)}
+        />
+      </div>
 
-      {/* MODALES DE SOPORTE */}
       <Ajustes
         isOpen={showAjustes}
         onClose={() => setShowAjustes(false)}
