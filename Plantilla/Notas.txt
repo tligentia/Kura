@@ -1,0 +1,34 @@
+
+Añade los archivos de la carpeta Plantilla a cualquier proyecto ya existente, 
+AIStudio adapte las llamadas del proyecto para pasar a utilizar como preferencia 
+los contenidos de la carpeta Plantilla: el Pie, el sistema de Cookies, 
+el menu de Apps, el sistema de Cripto, el sistema de ajustes, 
+las funciones de ofuscacion en lugar de adob 
+y el control de Seguridad de acceso a la informacion.
+
+Respeta en el header el nombre original de la aplicación y el icono y favicon 
+que ya existían y añade el botón de Manual y APP 
+
+
+Actúa como un Senior Frontend Engineer. Tu objetivo es migrar la estructura actual de esta aplicación a la arquitectura corporativa definida en la carpeta /Plantilla.
+1. Reestructuración de App.tsx:
+Implementa el estado de autenticación isAuth y la persistencia de apiKey en localStorage (usando app_is_auth_v2 y app_apikey).
+Importa y coloca el componente Security como guardián de acceso. Si no hay sesión, se muestra el PIN.
+Envuelve todo el contenido principal de la aplicación dentro del componente Cabecera.
+Implementa el fetch de la IP del usuario (usando api.ipify.org) y pásala como prop userIp a Cabecera.
+2. Adaptación de Cabecera y Header:
+Respeta el Nombre Original de la aplicación, su Icono y el Favicon definidos en el index.html y el código actual.
+Asegúrate de que el componente Cabecera integre correctamente los botones de "MANUAL" y "APP" (MenuApps) en la parte superior derecha.
+El contenido original de la app (el "core") debe inyectarse como children dentro de Cabecera.
+3. Migración de Utilidades y Seguridad:
+Sustituye cualquier uso de funciones nativas como atob() o btoa() por las funciones crypto.obfuscate y crypto.deobfuscate del archivo Parameters.ts.
+Utiliza la lógica de getSystemSLD() para la generación de claves dinámicas basadas en el dominio.
+Asegúrate de que el sistema de Ajustes reciba y gestione correctamente la apiKey para que esté disponible en todo el sistema.
+4. Pie de Página y Modales:
+Sustituye cualquier footer existente por el componente Pie.tsx.
+Vincula correctamente los triggers para abrir los modales de Ajustes, Cookies y Manual.
+5. Estética y Reglas de Calidad:
+Mantén el esquema de colores: Fondo Blanco, contenidos en Negro, Rojo y Gris.
+Usa tipografía Inter para textos y JetBrains Mono para datos técnicos.
+Asegura que todas las transiciones usen animate-in fade-in y efectos de desenfoque (backdrop-blur) en los modales.
+Por favor, actualiza los archivos necesarios (App.tsx, index.tsx y otros componentes relevantes) para reflejar este cambio estructural inmediatamente.

@@ -1,0 +1,8 @@
+{
+  "name": "Kura ✅",
+  "description": "Seguimiento clínico de heridas asistido por Gemini AI",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
