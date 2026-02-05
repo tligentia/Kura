@@ -57,8 +57,12 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
 
   // Texture Analysis
   const [textureSamples, setTextureSamples] = useState<TextureData[]>([]);
-  const [cursorPos, setCursorPos] = useState<Point | null>(null); // For hover effect only
+  const [cursorPos, setCursorPos] = useState<Point | null>(null); 
   const [hoveredTexture, setHoveredTexture] = useState<TextureData | null>(null);
+  
+  // Live Texture Scanning State
+  const [isScanningTexture, setIsScanningTexture] = useState(false);
+  const [liveTexturePreview, setLiveTexturePreview] = useState<TextureData | null>(null);
   
   // Calibration
   const [referenceRatio, setReferenceRatio] = useState<number | null>(null); // pixels per mm
@@ -138,6 +142,8 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
     setCurrentLine(null);
     setCurrentPolyPoints([]);
     setCursorPos(null);
+    setIsScanningTexture(false);
+    setLiveTexturePreview(null);
   };
 
   const handleReset = () => {
@@ -257,10 +263,10 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
   };
 
   // --- TEXTURE ANALYSIS ALGORITHM ---
-  const analyzeTissue = (x: number, y: number, save: boolean = false) => {
-      if (!canvasRef.current) return;
+  const analyzeTissue = (x: number, y: number): TextureData | null => {
+      if (!canvasRef.current) return null;
       const ctx = canvasRef.current.getContext('2d');
-      if (!ctx) return;
+      if (!ctx) return null;
 
       // Sample radius
       const r = 15; 
@@ -302,22 +308,20 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
           else if (sloughPct > 20) { label = 'Esfacelo'; color = '#fbbf24'; }
           else if (granPct > 20) { label = 'Granulación'; color = '#ef4444'; }
 
-          if (save) {
-              const newSample: TextureData = {
-                  id: Date.now(),
-                  x, y,
-                  granulation: granPct,
-                  slough: sloughPct,
-                  necrosis: necroPct,
-                  other: otherPct,
-                  label,
-                  color
-              };
-              setTextureSamples(prev => [...prev, newSample]);
-          }
+          return {
+              id: Date.now(),
+              x, y,
+              granulation: granPct,
+              slough: sloughPct,
+              necrosis: necroPct,
+              other: otherPct,
+              label,
+              color
+          };
 
       } catch (e) {
           console.warn("Pixel access restricted");
+          return null;
       }
   };
 
@@ -349,8 +353,11 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
         }
         setCurrentPolyPoints(prev => [...prev, coords]);
     } else if (activeTool === 'texture') {
+        e.preventDefault();
         const coords = getImgCoordinates(e);
-        analyzeTissue(coords.x, coords.y, true); // Save point
+        setIsScanningTexture(true);
+        const data = analyzeTissue(coords.x, coords.y);
+        setLiveTexturePreview(data);
     }
   };
 
@@ -367,6 +374,11 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
         setTempEndPoint(coords);
     } else if (activeTool === 'texture') {
         setCursorPos(coords);
+        // If holding mouse down, update live data
+        if (isScanningTexture) {
+            const data = analyzeTissue(coords.x, coords.y);
+            setLiveTexturePreview(data);
+        }
     }
   };
 
@@ -391,6 +403,13 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
         }
         setCurrentLine(null);
         setTempEndPoint(null);
+    } else if (activeTool === 'texture') {
+        if (isScanningTexture && liveTexturePreview) {
+            // Commit the last preview as a saved sample
+            setTextureSamples(prev => [...prev, { ...liveTexturePreview, id: Date.now() }]);
+        }
+        setIsScanningTexture(false);
+        setLiveTexturePreview(null);
     }
   };
 
@@ -423,6 +442,9 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose, currentPolyPoints, measureLines, polygons, textureSamples]);
+
+  // Determine which data to show in hover card (Live has priority)
+  const displayTexture = liveTexturePreview || hoveredTexture;
 
   return (
     <div className="fixed inset-0 z-[200] bg-white animate-in fade-in duration-300 flex flex-col overflow-hidden">
@@ -562,8 +584,8 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
                  return (
                     <g key={t.id} 
                        className="group cursor-help transition-opacity hover:opacity-100"
-                       onMouseEnter={() => setHoveredTexture(t)}
-                       onMouseLeave={() => setHoveredTexture(null)}
+                       onMouseEnter={() => !isScanningTexture && setHoveredTexture(t)}
+                       onMouseLeave={() => !isScanningTexture && setHoveredTexture(null)}
                        pointerEvents="all" // Ensure it catches events
                     >
                         {/* Target Circle */}
@@ -601,10 +623,22 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
                  );
               })}
 
-              {/* CURRENT CURSOR TEXTURE PROBE */}
+              {/* CURRENT CURSOR TEXTURE PROBE (With live indicator) */}
               {activeTool === 'texture' && cursorPos && (
                   <g>
-                      <circle cx={cursorPos.x} cy={cursorPos.y} r={15 / scale} fill="none" stroke="#ef4444" strokeWidth={2 / scale} strokeDasharray={2 / scale} />
+                      <circle 
+                        cx={cursorPos.x} 
+                        cy={cursorPos.y} 
+                        r={15 / scale} 
+                        fill={isScanningTexture ? "rgba(239, 68, 68, 0.2)" : "none"} 
+                        stroke={isScanningTexture ? "#ef4444" : "#9ca3af"}
+                        strokeWidth={2 / scale} 
+                        strokeDasharray={isScanningTexture ? "0" : (2 / scale)} 
+                        className={isScanningTexture ? "animate-pulse" : ""}
+                      />
+                      {isScanningTexture && (
+                          <circle cx={cursorPos.x} cy={cursorPos.y} r={2/scale} fill="#ef4444" />
+                      )}
                   </g>
               )}
             </svg>
@@ -623,56 +657,61 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
             </div>
         )}
 
-        {/* HOVER DETAIL CARD FOR TEXTURE */}
-        {hoveredTexture && (
+        {/* HOVER DETAIL CARD FOR TEXTURE (Live or Saved) */}
+        {displayTexture && (
             <div 
                 className="absolute z-50 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.2)] border border-gray-100 w-64 animate-in fade-in slide-in-from-bottom-2 duration-200 pointer-events-none"
                 style={{ 
-                    // Position roughly near the texture point if possible, or fixed bottom right if simpler
-                    // Using fixed position strategy for stability
+                    // Fixed position strategy for stability
                     bottom: '100px',
                     right: '30px',
                 }}
             >
                 <div className="flex justify-between items-start mb-3 border-b border-gray-100 pb-2">
                     <div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Muestra</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                            {isScanningTexture ? 'Analizando en vivo...' : 'Muestra'}
+                        </span>
                         <h4 className="text-lg font-black text-gray-900 flex items-center gap-2">
-                            <span className="bg-gray-900 text-white text-xs px-1.5 rounded py-0.5">T{textureSamples.findIndex(t => t.id === hoveredTexture.id) + 1}</span>
-                            {hoveredTexture.label}
+                            {!isScanningTexture && (
+                                <span className="bg-gray-900 text-white text-xs px-1.5 rounded py-0.5">
+                                    T{textureSamples.findIndex(t => t.id === displayTexture.id) + 1}
+                                </span>
+                            )}
+                            {displayTexture.label}
                         </h4>
                     </div>
-                    <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: hoveredTexture.color }} />
+                    <div className={`w-3 h-3 rounded-full shadow-sm ${isScanningTexture ? 'animate-pulse' : ''}`} style={{ backgroundColor: displayTexture.color }} />
                 </div>
                 
                 <div className="space-y-2">
                     <div className="space-y-1">
                         <div className="flex justify-between text-[10px] font-bold uppercase">
                             <span className="text-red-700">Granulación</span>
-                            <span>{hoveredTexture.granulation}%</span>
+                            <span>{displayTexture.granulation}%</span>
                         </div>
                         <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-red-500 rounded-full transition-all duration-500" style={{ width: `${hoveredTexture.granulation}%` }} />
+                            <div className="h-full bg-red-500 rounded-full transition-all duration-100" style={{ width: `${displayTexture.granulation}%` }} />
                         </div>
                     </div>
                     
                     <div className="space-y-1">
                         <div className="flex justify-between text-[10px] font-bold uppercase">
                             <span className="text-yellow-600">Esfacelo</span>
-                            <span>{hoveredTexture.slough}%</span>
+                            <span>{displayTexture.slough}%</span>
                         </div>
                         <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-yellow-400 rounded-full transition-all duration-500" style={{ width: `${hoveredTexture.slough}%` }} />
+                            <div className="h-full bg-yellow-400 rounded-full transition-all duration-100" style={{ width: `${displayTexture.slough}%` }} />
                         </div>
                     </div>
 
                     <div className="space-y-1">
                         <div className="flex justify-between text-[10px] font-bold uppercase">
                             <span className="text-gray-900">Necrosis</span>
-                            <span>{hoveredTexture.necrosis}%</span>
+                            <span>{displayTexture.necrosis}%</span>
                         </div>
                         <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-black rounded-full transition-all duration-500" style={{ width: `${hoveredTexture.necrosis}%` }} />
+                            <div className="h-full bg-black rounded-full transition-all duration-100" style={{ width: `${displayTexture.necrosis}%` }} />
                         </div>
                     </div>
                 </div>
