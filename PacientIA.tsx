@@ -212,7 +212,11 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
     ];
   });
 
-  const [activePatientId, setActivePatientId] = useState<string>('');
+  // Restore active patient from localStorage or default to empty
+  const [activePatientId, setActivePatientId] = useState<string>(() => {
+    return localStorage.getItem('app_active_patient_id') || '';
+  });
+
   const [searchTerm, setSearchTerm] = useState('');
   const [inputText, setInputText] = useState('');
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
@@ -256,6 +260,13 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
 
   const activePatient = patients.find(p => p.id === activePatientId);
   const isActuallyMobile = isMobileLayout || (typeof window !== 'undefined' && window.innerWidth < 768);
+
+  // Persist active patient selection
+  useEffect(() => {
+    if (activePatientId) {
+        localStorage.setItem('app_active_patient_id', activePatientId);
+    }
+  }, [activePatientId]);
 
   useEffect(() => {
     const resetScrolls = () => {

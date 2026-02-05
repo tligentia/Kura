@@ -4,7 +4,8 @@ import {
   X, ZoomIn, ZoomOut, RotateCw, Move, 
   Sun, Contrast, Eye, Grid3X3, RefreshCcw, 
   Maximize2, ImageMinus, Ruler, Trash2, Check, Lock,
-  Pentagon, ScanEye, MousePointer2, Undo2, EyeOff, ClipboardList, Layers
+  Pentagon, ScanEye, MousePointer2, Undo2, EyeOff, ClipboardList, Layers,
+  Activity
 } from 'lucide-react';
 
 interface ImageViewerProps {
@@ -57,6 +58,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
   // Texture Analysis
   const [textureSamples, setTextureSamples] = useState<TextureData[]>([]);
   const [cursorPos, setCursorPos] = useState<Point | null>(null); // For hover effect only
+  const [hoveredTexture, setHoveredTexture] = useState<TextureData | null>(null);
   
   // Calibration
   const [referenceRatio, setReferenceRatio] = useState<number | null>(null); // pixels per mm
@@ -546,15 +548,58 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
               )}
 
               {/* SAVED TEXTURE POINTS */}
-              {textureSamples.map((t, i) => (
-                 <g key={t.id}>
-                    <circle cx={t.x} cy={t.y} r={15 / scale} fill="none" stroke={t.color} strokeWidth={2 / scale} />
-                    <line x1={t.x - 20/scale} y1={t.y} x2={t.x + 20/scale} y2={t.y} stroke={t.color} strokeWidth={1 / scale} />
-                    <line x1={t.x} y1={t.y - 20/scale} x2={t.x} y2={t.y + 20/scale} stroke={t.color} strokeWidth={1 / scale} />
-                    <rect x={t.x + 20/scale} y={t.y - 10/scale} width={40/scale} height={12/scale} rx={2} fill="rgba(0,0,0,0.7)" />
-                    <text x={t.x + 40/scale} y={t.y} dy={3/scale} textAnchor="middle" fill="white" fontSize={8/scale} fontWeight="bold">T{i+1}</text>
-                 </g>
-              ))}
+              {textureSamples.map((t, i) => {
+                 // Dynamic scaling for markers to remain visible but not huge at different zooms
+                 // We limit the min/max size of the marker visual elements
+                 const radius = 15 / scale;
+                 const labelOffset = radius + (10 / scale);
+                 
+                 // Label box size calculation
+                 const boxW = 24 / scale;
+                 const boxH = 14 / scale;
+                 const fontSize = 9 / scale;
+
+                 return (
+                    <g key={t.id} 
+                       className="group cursor-help transition-opacity hover:opacity-100"
+                       onMouseEnter={() => setHoveredTexture(t)}
+                       onMouseLeave={() => setHoveredTexture(null)}
+                       pointerEvents="all" // Ensure it catches events
+                    >
+                        {/* Target Circle */}
+                        <circle cx={t.x} cy={t.y} r={radius} fill="rgba(255,255,255,0.1)" stroke={t.color} strokeWidth={2 / scale} />
+                        
+                        {/* Crosshair Lines */}
+                        <line x1={t.x - radius} y1={t.y} x2={t.x + radius} y2={t.y} stroke={t.color} strokeWidth={1 / scale} />
+                        <line x1={t.x} y1={t.y - radius} x2={t.x} y2={t.y + radius} stroke={t.color} strokeWidth={1 / scale} />
+                        
+                        {/* Label Badge */}
+                        <g transform={`translate(${t.x + labelOffset}, ${t.y - (boxH/2)})`}>
+                            <rect 
+                                width={boxW} 
+                                height={boxH} 
+                                rx={4 / scale} 
+                                fill="#111827" // gray-900
+                                stroke="rgba(255,255,255,0.2)"
+                                strokeWidth={1/scale}
+                                className="shadow-sm"
+                            />
+                            <text 
+                                x={boxW / 2} 
+                                y={boxH / 2} 
+                                dy={fontSize * 0.35} 
+                                textAnchor="middle" 
+                                fill="white" 
+                                fontSize={fontSize} 
+                                fontWeight="900" 
+                                fontFamily="sans-serif"
+                            >
+                                T{i+1}
+                            </text>
+                        </g>
+                    </g>
+                 );
+              })}
 
               {/* CURRENT CURSOR TEXTURE PROBE */}
               {activeTool === 'texture' && cursorPos && (
@@ -574,6 +619,62 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
                     <input type="number" autoFocus value={refInputVal} onChange={e => setRefInputVal(e.target.value)} placeholder="mm" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 text-xs font-bold outline-none focus:ring-1 focus:ring-red-700" />
                     <button onClick={() => setReference(showReferenceInput)} className="bg-red-700 text-white rounded-lg px-3 py-1 text-xs font-black">OK</button>
                     <button onClick={() => { setShowReferenceInput(null); setRefInputVal(''); }} className="bg-gray-100 text-gray-500 rounded-lg px-2 py-1"><X size={14} /></button>
+                </div>
+            </div>
+        )}
+
+        {/* HOVER DETAIL CARD FOR TEXTURE */}
+        {hoveredTexture && (
+            <div 
+                className="absolute z-50 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.2)] border border-gray-100 w-64 animate-in fade-in slide-in-from-bottom-2 duration-200 pointer-events-none"
+                style={{ 
+                    // Position roughly near the texture point if possible, or fixed bottom right if simpler
+                    // Using fixed position strategy for stability
+                    bottom: '100px',
+                    right: '30px',
+                }}
+            >
+                <div className="flex justify-between items-start mb-3 border-b border-gray-100 pb-2">
+                    <div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Muestra</span>
+                        <h4 className="text-lg font-black text-gray-900 flex items-center gap-2">
+                            <span className="bg-gray-900 text-white text-xs px-1.5 rounded py-0.5">T{textureSamples.findIndex(t => t.id === hoveredTexture.id) + 1}</span>
+                            {hoveredTexture.label}
+                        </h4>
+                    </div>
+                    <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: hoveredTexture.color }} />
+                </div>
+                
+                <div className="space-y-2">
+                    <div className="space-y-1">
+                        <div className="flex justify-between text-[10px] font-bold uppercase">
+                            <span className="text-red-700">Granulación</span>
+                            <span>{hoveredTexture.granulation}%</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-red-500 rounded-full transition-all duration-500" style={{ width: `${hoveredTexture.granulation}%` }} />
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-1">
+                        <div className="flex justify-between text-[10px] font-bold uppercase">
+                            <span className="text-yellow-600">Esfacelo</span>
+                            <span>{hoveredTexture.slough}%</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-yellow-400 rounded-full transition-all duration-500" style={{ width: `${hoveredTexture.slough}%` }} />
+                        </div>
+                    </div>
+
+                    <div className="space-y-1">
+                        <div className="flex justify-between text-[10px] font-bold uppercase">
+                            <span className="text-gray-900">Necrosis</span>
+                            <span>{hoveredTexture.necrosis}%</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-black rounded-full transition-all duration-500" style={{ width: `${hoveredTexture.necrosis}%` }} />
+                        </div>
+                    </div>
                 </div>
             </div>
         )}

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Security } from './Plantilla/Seguridad';
 import { Shell } from './Plantilla/Shell';
 import { PacientIA } from './PacientIA';
@@ -20,8 +20,19 @@ export default function App() {
     return localStorage.getItem('app_access_pin') || '';
   });
 
-  const [viewMode, setViewMode] = useState<'doctor' | 'patient'>('doctor');
+  // Initialize viewMode from localStorage, defaulting to 'patient' if no history exists
+  const [viewMode, setViewMode] = useState<'doctor' | 'patient'>(() => {
+    if (typeof window === 'undefined') return 'patient';
+    const savedMode = localStorage.getItem('app_view_mode');
+    return (savedMode === 'doctor' || savedMode === 'patient') ? savedMode : 'patient';
+  });
+
   const [isMobileView, setIsMobileView] = useState(false);
+
+  // Persist viewMode changes
+  useEffect(() => {
+    localStorage.setItem('app_view_mode', viewMode);
+  }, [viewMode]);
 
   const handleLoginSuccess = (pin: string) => {
     setIsAuth(true);
