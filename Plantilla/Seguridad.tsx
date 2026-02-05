@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 interface Props {
-  onLogin: () => void;
+  onLogin: (pin: string) => void;
 }
 
 export const Security: React.FC<Props> = ({ onLogin }) => {
@@ -9,6 +10,7 @@ export const Security: React.FC<Props> = ({ onLogin }) => {
   const [error, setError] = useState(false);
 
   const gridChars = useMemo(() => {
+    // Ensure characters for TARA (T, A, R) are present alongside others
     const required = ['7', '8', 'S', 'T', 'A', 'R'];
     const filler = 'BCDEFGHIJKMNOPQUVWXYZ01234569'.split('');
     let combined = [...required];
@@ -28,7 +30,8 @@ export const Security: React.FC<Props> = ({ onLogin }) => {
 
   useEffect(() => {
     if (pin.length === 4) {
-      if (['7887', 'STAR'].includes(pin)) onLogin();
+      // Valid PINs: 7887, STAR, TARA
+      if (['7887', 'STAR', 'TARA'].includes(pin)) onLogin(pin);
       else {
         setError(true);
         setTimeout(() => { setPin(''); setError(false); }, 800);

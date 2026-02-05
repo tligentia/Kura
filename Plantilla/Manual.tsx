@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, HelpCircle, ShieldCheck, Cpu, Zap, Database, ChevronRight, Menu, Layout, Key, Lock, ArrowRight } from 'lucide-react';
+import { X, HelpCircle, ShieldCheck, Cpu, Zap, Database, ChevronRight, Menu, Layout, Users, Stethoscope, Image as ImageIcon, ArrowUp } from 'lucide-react';
 
 interface ManualProps {
   isOpen: boolean;
@@ -13,11 +14,11 @@ interface Section {
 }
 
 const SECTIONS: Section[] = [
-  { id: 'man-intro', title: 'Introducción', icon: <Layout size={16} /> },
-  { id: 'man-motor', title: 'Motor IA', icon: <Cpu size={16} /> },
-  { id: 'man-security', title: 'Seguridad PIN', icon: <ShieldCheck size={16} /> },
-  { id: 'man-storage', title: 'Almacenamiento', icon: <Database size={16} /> },
-  { id: 'man-vault', title: 'Vault Dev', icon: <Lock size={16} /> },
+  { id: 'man-intro', title: 'Visión General', icon: <Layout size={16} /> },
+  { id: 'man-patients', title: 'Gestión Clínica', icon: <Users size={16} /> },
+  { id: 'man-ai', title: 'Inteligencia Art.', icon: <Cpu size={16} /> },
+  { id: 'man-comms', title: 'Comunicación', icon: <Stethoscope size={16} /> },
+  { id: 'man-privacy', title: 'Privacidad', icon: <ShieldCheck size={16} /> },
 ];
 
 export const Manual: React.FC<ManualProps> = ({ isOpen, onClose }) => {
@@ -84,8 +85,8 @@ export const Manual: React.FC<ManualProps> = ({ isOpen, onClose }) => {
               <HelpCircle size={20} />
             </div>
             <div>
-              <h3 className="font-black text-gray-900 uppercase tracking-tighter text-lg leading-tight">Manual de Instrucciones</h3>
-              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest hidden sm:block">System Documentation v2.0</p>
+              <h3 className="font-black text-gray-900 uppercase tracking-tighter text-lg leading-tight">Documentación Kurae</h3>
+              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest hidden sm:block">Guía Operativa v2.0</p>
             </div>
           </div>
           <button 
@@ -104,7 +105,7 @@ export const Manual: React.FC<ManualProps> = ({ isOpen, onClose }) => {
             ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
           `}>
             <div className="p-6 space-y-1">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Secciones</p>
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Índice</p>
               {SECTIONS.map((section) => (
                 <button
                   key={section.id}
@@ -129,12 +130,6 @@ export const Manual: React.FC<ManualProps> = ({ isOpen, onClose }) => {
                 </button>
               ))}
             </div>
-            <div className="mt-auto p-6 bg-gray-50/50">
-               <div className="flex items-center gap-2 text-[9px] font-black text-gray-400 uppercase tracking-widest">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-700 animate-pulse"></span>
-                  Documentación Activa
-               </div>
-            </div>
           </aside>
 
           {/* OVERLAY FOR MOBILE SIDEBAR */}
@@ -153,97 +148,130 @@ export const Manual: React.FC<ManualProps> = ({ isOpen, onClose }) => {
             {/* INTRO */}
             <section id="man-intro" className="space-y-6">
               <div className="space-y-2">
-                <span className="text-red-700 font-black text-[10px] uppercase tracking-[0.3em]">01. Bienvenida</span>
-                <h2 className="text-4xl font-black text-gray-900 tracking-tighter leading-none">Visión del<br/><span className="text-red-700 italic underline decoration-gray-900 decoration-2">Sistema</span></h2>
+                <span className="text-red-700 font-black text-[10px] uppercase tracking-[0.3em]">01. Introducción</span>
+                <h2 className="text-4xl font-black text-gray-900 tracking-tighter leading-none">Ecosistema<br/><span className="text-red-700 underline decoration-gray-900 decoration-2">Kurae</span></h2>
               </div>
               <p className="text-gray-600 leading-relaxed text-sm">
-                Esta plataforma es un entorno avanzado diseñado para el <strong>análisis estratégico de activos Cripto, DeFi y Fiat</strong>. No es una simple interfaz; es un puente entre la inteligencia generativa y el control local de datos.
+                Kurae es una herramienta de asistencia clínica diseñada para optimizar el <strong>seguimiento de heridas y úlceras</strong>. Su objetivo es reducir la carga administrativa del personal de enfermería y mejorar la precisión en la evaluación mediante Inteligencia Artificial Generativa.
               </p>
-              <div className="bg-gray-900 text-white p-6 rounded-3xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
-                   <Zap size={80} />
+              <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 flex flex-col md:flex-row gap-6">
+                <div className="flex-1">
+                    <h4 className="font-black text-xs uppercase tracking-widest mb-2 text-gray-900">Vista Doctor</h4>
+                    <p className="text-[11px] text-gray-500 leading-relaxed">
+                       Panel de control completo. Permite gestionar pacientes, analizar imágenes, redactar informes y supervisar la evolución.
+                    </p>
                 </div>
-                <h4 className="font-black text-xs uppercase tracking-widest mb-2">Filosofía Local-First</h4>
-                <p className="text-[11px] text-gray-400 leading-relaxed max-w-sm">
-                   Tus claves, tus prompts, tus resultados. Nada se procesa en servidores ajenos a Google y tu propio navegador.
-                </p>
+                <div className="w-px bg-gray-200 hidden md:block"></div>
+                <div className="flex-1">
+                    <h4 className="font-black text-xs uppercase tracking-widest mb-2 text-red-700">Vista Paciente</h4>
+                    <p className="text-[11px] text-gray-500 leading-relaxed">
+                       Interfaz simplificada para que el paciente reporte su estado, envíe fotografías de la herida y reciba feedback automático.
+                    </p>
+                </div>
               </div>
             </section>
 
-            {/* MOTOR IA */}
-            <section id="man-motor" className="space-y-6">
+            {/* GESTIÓN PACIENTES */}
+            <section id="man-patients" className="space-y-6">
               <div className="space-y-2">
-                <span className="text-red-700 font-black text-[10px] uppercase tracking-[0.3em]">02. Inteligencia</span>
-                <h2 className="text-4xl font-black text-gray-900 tracking-tighter leading-none">Motor de<br/>IA Gemini</h2>
+                <span className="text-red-700 font-black text-[10px] uppercase tracking-[0.3em]">02. Gestión</span>
+                <h2 className="text-4xl font-black text-gray-900 tracking-tighter leading-none">Listado y<br/>Priorización</h2>
               </div>
-              <p className="text-gray-600 leading-relaxed text-sm">
-                Utilizamos el modelo <code className="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-red-700">gemini-3-flash-preview</code> para el procesamiento.
-              </p>
-              <div className="border-l-4 border-gray-900 pl-6 py-2 space-y-4">
-                 <div className="flex items-start gap-4">
-                    <div className="w-6 h-6 rounded-full bg-red-700 text-white flex items-center justify-center text-[10px] font-black flex-shrink-0">1</div>
-                    <p className="text-xs font-bold text-gray-900">Configura tu API Key en Ajustes para activar el motor.</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div className="space-y-3">
+                    <h4 className="font-bold text-gray-900 text-sm flex items-center gap-2">
+                        <ArrowUp size={16} className="text-red-700" />
+                        Sistema de Prioridad
+                    </h4>
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                        Cada tarjeta de paciente cuenta con un botón de flecha <span className="inline-block bg-red-50 text-red-700 p-0.5 rounded"><ArrowUp size={10}/></span> en la esquina superior derecha.
+                        Al activarlo, el paciente se marca como <strong>Caso Prioritario</strong> y se desplaza automáticamente al inicio de la lista, independientemente del orden alfabético.
+                    </p>
                  </div>
-                 <div className="flex items-center gap-4 text-gray-400 animate-bounce py-2">
-                    <ArrowRight size={16} className="rotate-90" />
+                 <div className="space-y-3">
+                    <h4 className="font-bold text-gray-900 text-sm flex items-center gap-2">
+                        <Users size={16} />
+                        Búsqueda Inteligente
+                    </h4>
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                        La barra de búsqueda filtra en tiempo real por múltiples campos: <strong>Nombre, Diagnóstico, Aseguradora (Mutua) o Número de Expediente</strong>. Esto facilita la localización rápida en bases de datos extensas.
+                    </p>
                  </div>
-                 <div className="flex items-start gap-4">
-                    <div className="w-6 h-6 rounded-full bg-gray-900 text-white flex items-center justify-center text-[10px] font-black flex-shrink-0">2</div>
-                    <p className="text-xs font-bold text-gray-900">Realiza consultas complejas sobre mercados o código directamente.</p>
-                 </div>
+              </div>
+              <div className="p-4 bg-gray-900 text-white rounded-2xl text-[11px] font-mono mt-4">
+                 TIP: Utilice el botón "Pencil" en la cabecera para editar datos clínicos o archivar pacientes dados de alta.
               </div>
             </section>
 
-            {/* SEGURIDAD */}
-            <section id="man-security" className="space-y-6">
+            {/* INTELIGENCIA ARTIFICIAL */}
+            <section id="man-ai" className="space-y-6">
               <div className="space-y-2">
-                <span className="text-red-700 font-black text-[10px] uppercase tracking-[0.3em]">03. Blindaje</span>
-                <h2 className="text-4xl font-black text-gray-900 tracking-tighter leading-none">Acceso por<br/>PIN Único</h2>
-              </div>
-              <div className="bg-red-50 border border-red-100 p-6 rounded-3xl space-y-4">
-                <div className="flex items-center gap-2 text-red-700">
-                  <ShieldCheck size={20} />
-                  <span className="font-black text-[10px] uppercase tracking-widest">Protocolo de Puerta</span>
-                </div>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  Para acceder al contenido, el sistema requiere un <span className="font-black text-gray-900">PIN maestro corporativo</span> proporcionado por la administración. Este PIN no se envía a ningún servidor; se valida localmente mediante un hash volátil para garantizar la máxima privacidad del operador.
-                </p>
-              </div>
-            </section>
-
-            {/* STORAGE */}
-            <section id="man-storage" className="space-y-6">
-              <div className="space-y-2">
-                <span className="text-red-700 font-black text-[10px] uppercase tracking-[0.3em]">04. Datos</span>
-                <h2 className="text-4xl font-black text-gray-900 tracking-tighter leading-none">Memoria<br/>Persistente</h2>
+                <span className="text-red-700 font-black text-[10px] uppercase tracking-[0.3em]">03. Motor Gemini</span>
+                <h2 className="text-4xl font-black text-gray-900 tracking-tighter leading-none">Análisis de<br/>Imágenes</h2>
               </div>
               <p className="text-gray-600 leading-relaxed text-sm">
-                Utilizamos el <span className="text-gray-900 font-bold">LocalStorage</span> del navegador para recordar tu sesión.
+                Kurae integra visión por computador para asistir en el diagnóstico. Al subir una fotografía de la herida (botón <ImageIcon size={14} className="inline"/>), el sistema genera automáticamente un <strong>Informe Estructurado</strong>.
               </p>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 border border-gray-100 rounded-2xl bg-gray-50/50">
-                  <h5 className="font-black text-[9px] uppercase tracking-widest mb-1 text-gray-400">¿Qué guardamos?</h5>
-                  <p className="text-[11px] font-bold text-gray-700 italic">API Key, Sesión Auth.</p>
-                </div>
-                <div className="p-4 border border-gray-100 rounded-2xl bg-gray-50/50">
-                  <h5 className="font-black text-[9px] uppercase tracking-widest mb-1 text-gray-400">¿Cómo borrar?</h5>
-                  <p className="text-[11px] font-bold text-red-700 italic">Botón "Reset" en el Pie.</p>
-                </div>
+              
+              <div className="space-y-4">
+                  <div className="border-l-4 border-red-700 pl-4 py-1">
+                      <h5 className="text-xs font-black uppercase text-gray-900">Hallazgos Visuales</h5>
+                      <p className="text-[10px] text-gray-500">Descripción técnica del lecho de la herida, bordes y piel perilesional.</p>
+                  </div>
+                  <div className="border-l-4 border-gray-900 pl-4 py-1">
+                      <h5 className="text-xs font-black uppercase text-gray-900">Signos de Alerta</h5>
+                      <p className="text-[10px] text-gray-500">Detección de infección, necrosis, eritema o exudado purulento.</p>
+                  </div>
+                  <div className="border-l-4 border-gray-300 pl-4 py-1">
+                      <h5 className="text-xs font-black uppercase text-gray-900">Plan de Acción</h5>
+                      <p className="text-[10px] text-gray-500">Recomendaciones inmediatas de cura o derivación.</p>
+                  </div>
               </div>
             </section>
 
-            {/* VAULT */}
-            <section id="man-vault" className="space-y-6 pb-20">
+            {/* COMUNICACIÓN */}
+            <section id="man-comms" className="space-y-6">
               <div className="space-y-2">
-                <span className="text-red-700 font-black text-[10px] uppercase tracking-[0.3em]">05. Developer</span>
-                <h2 className="text-4xl font-black text-gray-900 tracking-tighter leading-none">Bóveda de<br/>Claves (Vault)</h2>
+                <span className="text-red-700 font-black text-[10px] uppercase tracking-[0.3em]">04. Chat Clínico</span>
+                <h2 className="text-4xl font-black text-gray-900 tracking-tighter leading-none">Redacción<br/>Asistida</h2>
+              </div>
+              <div className="flex items-start gap-4 bg-gray-50 p-6 rounded-3xl border border-gray-100">
+                 <div className="p-3 bg-white rounded-xl shadow-sm text-red-700">
+                    <Zap size={24} />
+                 </div>
+                 <div>
+                    <h4 className="font-bold text-gray-900 text-sm mb-2">Función "Polishing"</h4>
+                    <p className="text-xs text-gray-600 leading-relaxed mb-4">
+                       Escriba notas rápidas o informales en el chat (ej: "limpiar bien y ver si sale pus"). Pulse el botón del <strong>Rayo</strong>. La IA reescribirá su mensaje con terminología clínica, tono empático y profesional antes de enviarlo.
+                    </p>
+                    <div className="text-[10px] font-mono bg-white p-2 rounded border border-gray-200 text-gray-500">
+                       "Realizar limpieza exhaustiva y vigilar presencia de exudado purulento..."
+                    </div>
+                 </div>
+              </div>
+            </section>
+
+            {/* PRIVACIDAD */}
+            <section id="man-privacy" className="space-y-6 pb-20">
+              <div className="space-y-2">
+                <span className="text-red-700 font-black text-[10px] uppercase tracking-[0.3em]">05. Datos</span>
+                <h2 className="text-4xl font-black text-gray-900 tracking-tighter leading-none">Seguridad<br/>Local-First</h2>
               </div>
               <p className="text-gray-600 leading-relaxed text-sm">
-                Para usuarios avanzados y desarrolladores de Tligent, el sistema se sincroniza con una base de datos distribuida en Google Sheets para resolución rápida de claves ofuscadas.
+                Kurae opera bajo un principio de <strong>Privacidad por Diseño</strong>.
               </p>
-              <div className="p-4 bg-gray-50 border border-gray-200 rounded-2xl font-mono text-[10px] text-gray-400">
-                <p>// Log: Sincronizando Vault...</p>
-                <p className="text-green-600">// Success: 14 Shortcuts cargados.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 border border-gray-100 rounded-2xl bg-white shadow-sm">
+                   <Database size={20} className="text-gray-400 mb-2" />
+                   <h5 className="font-black text-[10px] uppercase tracking-widest mb-1 text-gray-900">Almacenamiento</h5>
+                   <p className="text-[11px] text-gray-500">Todos los datos de pacientes y chats se guardan en el <strong>LocalStorage</strong> de su dispositivo. No hay base de datos en la nube.</p>
+                </div>
+                <div className="p-4 border border-gray-100 rounded-2xl bg-white shadow-sm">
+                   <ShieldCheck size={20} className="text-red-700 mb-2" />
+                   <h5 className="font-black text-[10px] uppercase tracking-widest mb-1 text-gray-900">Procesamiento</h5>
+                   <p className="text-[11px] text-gray-500">Las imágenes y textos solo se envían a la API de Google Gemini para su análisis momentáneo y no se usan para reentrenamiento.</p>
+                </div>
               </div>
             </section>
 

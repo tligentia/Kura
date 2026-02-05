@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Modality } from "@google/genai";
 
 // --- DOMAIN LOGIC ---
@@ -47,14 +48,6 @@ export const crypto = {
 };
 
 // --- API & MODELS ---
-const getActiveApiKey = () => {
-  /**
-   * Priorizamos la clave manual guardada en localStorage (Developer Mode)
-   * Si no existe, usamos la variable de entorno del sistema.
-   */
-  const manualKey = typeof window !== 'undefined' ? localStorage.getItem('app_apikey_v2') : null;
-  return manualKey || process.env.API_KEY || '';
-};
 
 /**
  * Recupera una clave específica de la bóveda de Google Sheets
@@ -82,10 +75,12 @@ export const fetchVaultKey = async (targetLabel: string, seed: string): Promise<
 };
 
 export const listAvailableModels = async (): Promise<string[]> => {
-  const apiKey = getActiveApiKey();
+  // Using process.env.API_KEY directly as required by guidelines
+  const apiKey = process.env.API_KEY;
   if (!apiKey) return ['gemini-3-flash-preview', 'gemini-3-pro-preview'];
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    // Create new instance right before call as per guidelines
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const result = await ai.models.list();
     const models: string[] = [];
     for await (const m of result) {
@@ -107,10 +102,11 @@ export const listAvailableModels = async (): Promise<string[]> => {
 };
 
 export const validateKey = async (): Promise<boolean> => {
-  const key = getActiveApiKey();
-  if (!key) return false;
+  // Using process.env.API_KEY directly as required by guidelines
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) return false;
   try {
-    const ai = new GoogleGenAI({ apiKey: key });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: 'ping' });
     return true;
   } catch {
@@ -119,9 +115,10 @@ export const validateKey = async (): Promise<boolean> => {
 };
 
 export const askGemini = async (prompt: string, modelOverride?: string): Promise<string> => {
-  const apiKey = getActiveApiKey();
+  // Using process.env.API_KEY directly as required by guidelines
+  const apiKey = process.env.API_KEY;
   if (!apiKey) throw new Error("API_KEY_REQUIRED");
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const model = modelOverride || localStorage.getItem('app_selected_model') || 'gemini-3-flash-preview';
 
   const isTTS = model.includes('tts');
@@ -150,6 +147,7 @@ export const askGemini = async (prompt: string, modelOverride?: string): Promise
         : (response.text || "Imagen generada sin descripción textual.");
     }
 
+    // Property access .text as required by guidelines
     return response.text || "No response received.";
   } catch (e: any) {
     console.error("SISTEMA: Error en comunicación con Gemini", e);

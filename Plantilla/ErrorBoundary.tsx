@@ -10,7 +10,7 @@ interface State {
     error: Error | null;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
+export class ErrorBoundary extends React.Component<Props, State> {
     public state: State = {
         hasError: false,
         error: null
@@ -25,7 +25,10 @@ export class ErrorBoundary extends Component<Props, State> {
     }
 
     public render() {
-        if (this.state.hasError) {
+        const { hasError, error } = this.state;
+        const { children } = this.props;
+
+        if (hasError) {
             return (
                 <div className="min-h-screen bg-white flex items-center justify-center p-8 font-sans">
                     <div className="max-w-md w-full bg-white border-2 border-red-700 p-8 rounded-[2.5rem] shadow-[0_20px_50px_rgba(185,28,28,0.15)] text-center animate-in fade-in zoom-in duration-500">
@@ -41,7 +44,7 @@ export class ErrorBoundary extends Component<Props, State> {
                             Se ha detectado una anomalía crítica en la interfaz. El núcleo del sistema se ha detenido para proteger los datos.
                         </p>
                         <div className="bg-gray-50 p-4 rounded-2xl mb-8 border border-gray-100 italic text-[10px] font-mono text-gray-400 break-words">
-                            {this.state.error?.message || 'Error desconocido'}
+                            {error?.message || 'Error desconocido'}
                         </div>
                         <button
                             onClick={() => window.location.reload()}
@@ -55,6 +58,6 @@ export class ErrorBoundary extends Component<Props, State> {
             );
         }
 
-        return this.props.children;
+        return children;
     }
 }

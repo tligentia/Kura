@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Activity, Sparkles, HelpCircle, AlertCircle, CheckCircle2, Key, ArrowRight, Loader2, Stethoscope, Heart, Smartphone, Monitor } from 'lucide-react';
-import { COLORS, validateKey, listAvailableModels, fetchVaultKey } from './Parameters';
+import { Activity, Sparkles, HelpCircle, AlertCircle, CheckCircle2, Activity as ActivityIcon, Stethoscope, Heart, Smartphone, Monitor } from 'lucide-react';
+import { COLORS, validateKey, listAvailableModels } from './Parameters';
 import { Footer } from './Footer';
 import { Cookies } from './Cookies';
 import { Ajustes } from './Ajustes';
@@ -10,16 +10,15 @@ import { AppMenu } from './AppMenu';
 
 interface ShellProps {
   children: React.ReactNode;
-  apiKey: string;
-  onApiKeySave: (key: string) => void;
   viewMode: 'doctor' | 'patient';
   onViewModeChange: (mode: 'doctor' | 'patient') => void;
   isMobileView: boolean;
   onToggleMobileView: () => void;
+  accessPin?: string;
 }
 
 export const Shell: React.FC<ShellProps> = ({ 
-  children, apiKey, onApiKeySave, viewMode, onViewModeChange, isMobileView, onToggleMobileView 
+  children, viewMode, onViewModeChange, isMobileView, onToggleMobileView, accessPin 
 }) => {
   const [showAjustes, setShowAjustes] = useState(false);
   const [showCookies, setShowCookies] = useState(false);
@@ -47,6 +46,8 @@ export const Shell: React.FC<ShellProps> = ({
         if (savedIps.includes(obfuscatedCurrent)) {
           console.log("SISTEMA: IP Memorizada detectada. Concediendo acceso automático...");
           localStorage.setItem('app_is_auth_v2', 'true');
+          // If auto-login via IP, we might not have a PIN. Default to restrictive or standard.
+          // For now, reload handles auth state, but App.tsx handles PIN default.
           window.location.reload();
         }
       }
@@ -103,12 +104,12 @@ export const Shell: React.FC<ShellProps> = ({
 
   return (
     <div className={`min-h-screen ${COLORS.bg} font-sans flex flex-col p-0 animate-in fade-in duration-700`}>
-      {/* HEADER DINÁMICO - Removed md:p-8 from root to avoid frame effect */}
+      {/* HEADER DINÁMICO */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 pb-4 pt-4 flex flex-col md:flex-row gap-4 justify-between items-center px-6">
         <div className="w-full md:w-auto flex justify-between md:justify-start items-center">
           <div>
             <h1 className="text-2xl font-black tracking-tighter text-gray-900 flex items-center gap-2">
-              <Activity className="text-indigo-600" size={28} />
+              <ActivityIcon className="text-red-700" size={28} />
               Kurae<span className="text-red-700"> +</span>
             </h1>
             <div className="flex items-center gap-4 mt-0.5">
@@ -131,18 +132,18 @@ export const Shell: React.FC<ShellProps> = ({
           </div>
         </div>
 
-        {/* CONTROLES CENTRALES: Modo + Vista */}
+        {/* CONTROLES CENTRALES: Modo + Vista con colores temáticos */}
         <div className="flex items-center gap-3 bg-gray-50 p-1 rounded-full border border-gray-200 shadow-sm backdrop-blur-sm">
             <div className="flex bg-gray-200/50 rounded-full p-1">
                 <button 
                     onClick={() => onViewModeChange('doctor')}
-                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${viewMode === 'doctor' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:text-indigo-600'}`}
+                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${viewMode === 'doctor' ? 'bg-gray-900 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`}
                 >
                     <Stethoscope size={12} /> <span className="hidden sm:inline">Doctor</span>
                 </button>
                 <button 
                     onClick={() => onViewModeChange('patient')}
-                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${viewMode === 'patient' ? 'bg-teal-500 text-white shadow-md' : 'text-gray-500 hover:text-teal-600'}`}
+                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${viewMode === 'patient' ? 'bg-red-700 text-white shadow-md' : 'text-gray-500 hover:text-red-700'}`}
                 >
                     <Heart size={12} /> <span className="hidden sm:inline">Paciente</span>
                 </button>
@@ -167,13 +168,15 @@ export const Shell: React.FC<ShellProps> = ({
             <HelpCircle size={16} className="text-red-700 group-hover:scale-110 transition-transform" />
             <span className="text-[9px] font-black uppercase tracking-widest hidden sm:inline">Manual</span>
           </button>
-          <AppMenu />
+          
+          {/* Conditionally render APP menu only for STAR access */}
+          {accessPin === 'STAR' && <AppMenu />}
         </div>
       </header>
 
-      {/* ÁREA DE CONTENIDO PRINCIPAL - Removed mx-auto and max-w-7xl to eliminate the outer frame */}
+      {/* ÁREA DE CONTENIDO PRINCIPAL */}
       <main className={`flex-1 w-full flex flex-col items-center transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${
-          isMobileView ? 'max-w-[420px] mx-auto mt-4' : 'max-w-none'
+          isMobileView ? 'max-w-[500px] mx-auto mt-4' : 'max-w-none'
       }`}>
         <div className={`w-full h-full transition-all duration-500 ${isMobileView ? 'scale-[0.98] origin-top border border-gray-200 rounded-[3rem] overflow-hidden shadow-2xl' : ''}`}>
            {children}
@@ -192,8 +195,6 @@ export const Shell: React.FC<ShellProps> = ({
       <Ajustes
         isOpen={showAjustes}
         onClose={() => setShowAjustes(false)}
-        apiKey={apiKey}
-        onApiKeySave={onApiKeySave}
         userIp={userIp}
       />
 

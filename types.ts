@@ -20,6 +20,10 @@ export interface Patient {
   name: string;
   age: number;
   condition: string;
+  insurance?: string; // Mutua
+  fileNumber?: string; // Expediente / Carpeta
+  archived?: boolean; // Estado de archivado
+  isPriority?: boolean; // Estado de favorito/prioridad
   lastActivity: string;
   avatarColor: string;
   avatarUrl?: string; // New field for patient photo

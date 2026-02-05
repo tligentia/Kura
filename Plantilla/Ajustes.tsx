@@ -1,27 +1,28 @@
+
 import React, { useState, useEffect } from 'react';
-import { X, Key, ShieldCheck, RefreshCcw, Eye, EyeOff, ExternalLink, Lock, Database, Loader2, CheckCircle2, XCircle, Sparkles, Send, Table, Cpu, ChevronDown, Globe, Plus, Zap } from 'lucide-react';
-import { getShortcutKey, crypto, validateKey, listAvailableModels, askGemini } from './Parameters';
+import { X, ShieldCheck, RefreshCcw, Database, Loader2, CheckCircle2, XCircle, Sparkles, Send, Cpu, ChevronDown, Globe, Plus, Zap, KeyRound, Unlock } from 'lucide-react';
+import { crypto, validateKey, listAvailableModels, askGemini, getShortcutKey } from './Parameters';
 import { Obfuscator } from './Obfuscator';
 
 interface AjustesProps {
   isOpen: boolean;
   onClose: () => void;
-  apiKey: string;
-  onApiKeySave: (key: string) => void;
   userIp: string | null;
 }
 
-export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApiKeySave, userIp }) => {
+export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, userIp }) => {
   const [showObfuscator, setShowObfuscator] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [isValidating, setIsValidating] = useState(false);
-  const [showKey, setShowKey] = useState(false);
-  const [localKey, setLocalKey] = useState(apiKey);
   
   // AI Sandbox states
   const [aiQuestion, setAiQuestion] = useState('');
   const [aiAnswer, setAiAnswer] = useState('');
   const [isAsking, setIsAsking] = useState(false);
+
+  // System Access state
+  const [accessCode, setAccessCode] = useState('');
+  const [isSyncingAccess, setIsSyncingAccess] = useState(false);
 
   // AI Model states
   const [availableModels, setAvailableModels] = useState<string[]>([]);
@@ -71,17 +72,29 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
     setIsValidating(false);
   };
 
+  const handleApplyAccessCode = async () => {
+    if (!accessCode.trim()) return;
+    setIsSyncingAccess(true);
+    
+    // Check for development shortcuts
+    const devKey = getShortcutKey(accessCode);
+    if (devKey) {
+      // In a real scenario, this key would be used to override process.env.API_KEY or saved to a vault
+      // For this sandbox, we simply validate the system status
+      await handleConfigCheck();
+      setAccessCode('');
+    } else {
+      setStatus('error');
+      setTimeout(() => setStatus('idle'), 2000);
+    }
+    setIsSyncingAccess(false);
+  };
+
   useEffect(() => {
     if (isOpen) {
-      setLocalKey(apiKey);
       handleConfigCheck();
     }
-  }, [isOpen, apiKey]);
-
-  const handleSaveKey = () => {
-    onApiKeySave(localKey);
-    handleConfigCheck();
-  };
+  }, [isOpen]);
 
   const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
@@ -134,64 +147,42 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
 
         <div className="p-6 overflow-y-auto space-y-6 custom-scrollbar">
           
-          {/* SECCIÓN API KEY (DEVELOPER MODE) */}
+          {/* ACCESS CONTROL SECTION */}
           <section className="space-y-4 bg-gray-50/50 p-6 rounded-3xl border border-gray-100 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover:scale-110 transition-transform">
-              <Key size={80} />
-            </div>
-            
             <div className="flex justify-between items-center px-1">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-900 flex items-center gap-2">
-                <Lock size={14} className="text-red-700" /> ApiKey de Gemini
+                 <KeyRound size={14} className="text-red-700" /> Acceso al Motor
               </label>
-              <a 
-                href="https://ai.google.dev/" 
-                target="_blank" 
-                rel="noreferrer"
-                className="text-[9px] font-black uppercase text-indigo-600 flex items-center gap-1 hover:underline"
-              >
-                Obtener Key <ExternalLink size={10} />
-              </a>
             </div>
 
-            <div className="space-y-3">
-              <div className="relative">
-                <input
-                  type={showKey ? 'text' : 'password'}
-                  value={localKey}
-                  onChange={(e) => setLocalKey(e.target.value)}
-                  placeholder="Introducir Gemini API Key..."
-                  className="w-full bg-white border border-gray-200 p-4 rounded-2xl text-xs font-mono outline-none focus:ring-2 focus:ring-red-700 transition-all shadow-sm"
+            <div className="flex gap-2">
+                <input 
+                  type="password"
+                  value={accessCode}
+                  onChange={(e) => setAccessCode(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleApplyAccessCode()}
+                  placeholder="Atajo o Clave..."
+                  className="flex-1 bg-white border border-gray-200 px-4 py-3 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-red-700/20 focus:border-red-700 transition-all shadow-inner"
                 />
                 <button 
-                  onClick={() => setShowKey(!showKey)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900 transition-colors"
+                  onClick={handleApplyAccessCode}
+                  disabled={isSyncingAccess || !accessCode.trim()}
+                  className="bg-gray-900 text-white px-4 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-black transition-all shadow-md active:scale-95 disabled:opacity-30"
                 >
-                  {showKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {isSyncingAccess ? <Loader2 size={16} className="animate-spin" /> : <Unlock size={16} />}
                 </button>
-              </div>
-              
-              <div className="flex gap-2">
-                <button 
-                  onClick={handleSaveKey}
-                  className="flex-1 bg-gray-900 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
-                >
-                  <RefreshCcw size={14} className={isValidating ? 'animate-spin' : ''} />
-                  Sincronizar Key
-                </button>
-              </div>
             </div>
 
             {status === 'error' && (
               <div className="flex items-center gap-2 text-red-700 bg-red-50 p-3 rounded-xl border border-red-100 animate-in slide-in-from-top-1">
                 <XCircle size={14} />
-                <span className="text-[9px] font-black uppercase tracking-widest">Error: Key no válida o configurada incorrectamente</span>
+                <span className="text-[9px] font-black uppercase tracking-widest">Código o Motor no disponible</span>
               </div>
             )}
             {status === 'success' && (
               <div className="flex items-center gap-2 text-green-700 bg-green-50 p-3 rounded-xl border border-green-100 animate-in slide-in-from-top-1">
                 <CheckCircle2 size={14} />
-                <span className="text-[9px] font-black uppercase tracking-widest">Motor Gemini Validado y Activo</span>
+                <span className="text-[9px] font-black uppercase tracking-widest">Sistema Vinculado Correctamente</span>
               </div>
             )}
           </section>
