@@ -69,6 +69,9 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
   const [showReferenceInput, setShowReferenceInput] = useState<number | null>(null);
   const [refInputVal, setRefInputVal] = useState('');
 
+  // Persistence Safety
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const imgRef = useRef<HTMLImageElement>(null);
@@ -77,13 +80,36 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
   const [notification, setNotification] = useState<string | null>(null);
 
   // --- PERSISTENCE LOGIC ---
-  const getStorageKey = (url: string) => `kurae_layers_${btoa(url).slice(0, 32)}`;
+  const getStorageKey = (url: string) => {
+    // Generate a robust unique key from the image content (Base64 or URL)
+    // Avoid btoa collision by hashing the tail + length
+    if (!url) return 'kurae_empty';
+    
+    let hash = 0;
+    // Use last 50 chars (unique for base64) and length to ensure uniqueness
+    const str = url.slice(-50) + url.length;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash |= 0; // Convert to 32bit integer
+    }
+    return `kurae_layers_${hash}`;
+  };
 
   // Load Layers
   useEffect(() => {
     if (!src) return;
+    setIsDataLoaded(false); // Reset lock
     try {
-        const savedData = localStorage.getItem(getStorageKey(src));
+        const key = getStorageKey(src);
+        const savedData = localStorage.getItem(key);
+        
+        // Reset state first to ensure clean slate for new image
+        setMeasureLines([]);
+        setPolygons([]);
+        setTextureSamples([]);
+        setReferenceRatio(null);
+
         if (savedData) {
             const parsed = JSON.parse(savedData);
             if (parsed.lines) setMeasureLines(parsed.lines);
@@ -93,20 +119,24 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
         }
     } catch (e) {
         console.error("Error loading annotations", e);
+    } finally {
+        setIsDataLoaded(true); // Unlock saving
     }
   }, [src]);
 
   // Save Layers
   useEffect(() => {
-    if (!src) return;
+    if (!src || !isDataLoaded) return; // Prevent overwriting before load
+    
+    const key = getStorageKey(src);
     const dataToSave = {
         lines: measureLines,
         polygons: polygons,
         textures: textureSamples,
         ratio: referenceRatio
     };
-    localStorage.setItem(getStorageKey(src), JSON.stringify(dataToSave));
-  }, [measureLines, polygons, textureSamples, referenceRatio, src]);
+    localStorage.setItem(key, JSON.stringify(dataToSave));
+  }, [measureLines, polygons, textureSamples, referenceRatio, src, isDataLoaded]);
 
 
   // Initialize hidden canvas for texture analysis
@@ -804,7 +834,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
             <div className="flex items-center gap-1 bg-gray-50 p-1.5 rounded-xl border border-gray-100 hidden sm:flex">
                  <button onClick={() => handleZoom(-0.25)} className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-white" title="Alejar"><ZoomOut size={18} /></button>
                  <button onClick={() => handleZoom(0.25)} className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-white" title="Acercar"><ZoomIn size={18} /></button>
-                 <button onClick={handleRotate} className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-white" title="Rotar"><RotateCw size={18} /></button>
+                 <button onClick={() => handleRotate} className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-white" title="Rotar"><RotateCw size={18} /></button>
             </div>
          </div>
 
