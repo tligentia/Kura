@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 interface Props {
@@ -26,7 +26,6 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
     public render() {
         const { hasError, error } = this.state;
-        const { children } = this.props;
 
         if (hasError) {
             return (
@@ -58,6 +57,6 @@ export class ErrorBoundary extends React.Component<Props, State> {
             );
         }
 
-        return children;
+        return this.props.children;
     }
 }

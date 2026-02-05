@@ -5,6 +5,7 @@ export interface Message {
   content: string;
   timestamp: string;
   imageUrl?: string;
+  analysis?: string; // New: associated IA analysis result
   isAnalysis?: boolean;
 }
 

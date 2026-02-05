@@ -4,7 +4,8 @@ import {
   Search, Plus, Send, Image as ImageIcon, Sparkles, 
   Mic, Activity, Stethoscope, Heart, Zap,
   ArrowLeft, AlertTriangle, ClipboardCheck, MessageSquareHeart,
-  Loader2, X, UserPlus, Pencil, Archive, Building2, FileText, ArrowUp, Star, EyeOff, FileText as FileTextIcon, Maximize2, ShieldAlert
+  Loader2, X, UserPlus, Pencil, Archive, Building2, FileText, ArrowUp, Star, EyeOff, FileText as FileTextIcon, Maximize2, ShieldAlert,
+  Copy, Check
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { Patient, Message } from './types';
@@ -56,6 +57,11 @@ const FormattedText: React.FC<{ text: string, className?: string }> = ({ text, c
         const trimmed = line.trim();
         if (!trimmed) return <div key={i} className="h-1" />;
 
+        // Detect Headers (###)
+        if (trimmed.startsWith('###')) {
+            return <h4 key={i} className="text-red-700 font-black uppercase tracking-widest text-[10px] mt-3 mb-1">{trimmed.replace(/^#+\s*/, '')}</h4>;
+        }
+
         // Detect Numbered Lists (e.g. "1. **Title:** Desc")
         const numMatch = trimmed.match(/^(\d+\.)\s+(.*)/);
         if (numMatch) {
@@ -80,6 +86,23 @@ const FormattedText: React.FC<{ text: string, className?: string }> = ({ text, c
         // Standard line
         return <p key={i} className="min-h-[1.2em] leading-relaxed">{parseInline(line)}</p>;
       })}
+    </div>
+  );
+};
+
+// --- RICH AI MESSAGE COMPONENT ---
+const RichAiMessage: React.FC<{ content: string, isMobile: boolean }> = ({ content, isMobile }) => {
+  return (
+    <div className={`w-full ${isMobile ? 'max-w-full' : 'max-w-3xl'} mx-auto bg-white border border-gray-100 rounded-[1.5rem] p-4 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)]`}>
+        <div className="flex items-center gap-2 mb-3 border-b border-gray-50 pb-2">
+            <div className="w-6 h-6 rounded-full bg-red-50 flex items-center justify-center text-red-700">
+                <Sparkles size={12} />
+            </div>
+            <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Análisis Inteligente</span>
+        </div>
+        <div className={`font-medium leading-relaxed text-gray-700 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+            <FormattedText text={content} />
+        </div>
     </div>
   );
 };
@@ -197,10 +220,13 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
   const [isAiPolishing, setIsAiPolishing] = useState(false);
   const [isLiveActive, setIsLiveActive] = useState(false);
   const [mobileShowChat, setMobileShowChat] = useState(false);
-  const [expandedAiMessages, setExpandedAiMessages] = useState<Record<string, boolean>>({});
   
   // Image Viewer State
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  
+  // Analysis Modal State
+  const [analysisToShow, setAnalysisToShow] = useState<string | null>(null);
+  const [isAnalysisCopied, setIsAnalysisCopied] = useState(false);
   
   // Modal State for Create/Edit
   const [showModal, setShowModal] = useState(false);
@@ -324,11 +350,11 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
         return !text.includes('YES');
     } catch (e) {
         console.error("Privacy check failed", e);
-        return true; // Allow on error to avoid blocking valid usage, or change to false to be strict
+        return true; 
     }
   };
 
-  const handleImageAnalysis = async (base64: string, mimeType: string) => {
+  const handleImageAnalysis = async (msgId: string, base64: string, mimeType: string) => {
     setIsAiAnalyzing(true);
     const ai = new GoogleGenAI({ apiKey: getEffectiveApiKey() });
     try {
@@ -357,15 +383,13 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
           ]
         }
       });
+      
       if (response.text) {
-        const aiMsg: Message = {
-          id: Date.now().toString(),
-          role: 'ai',
-          content: response.text,
-          timestamp: new Date().toISOString(),
-          isAnalysis: true
-        };
-        addMessageToPatient(activePatientId, aiMsg);
+        // Associate result with the specific message ID instead of creating a new message
+        setPatients(prev => prev.map(p => p.id === activePatientId ? {
+            ...p,
+            messages: p.messages.map(m => m.id === msgId ? { ...m, analysis: response.text } : m)
+        } : p));
       }
     } catch (e) {
       console.error(e);
@@ -439,7 +463,6 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
     setInputText('');
 
     if (viewMode === 'patient') {
-      // Trigger AI conversational response
       setTimeout(() => {
         handleAutoResponse();
       }, 1000);
@@ -475,8 +498,10 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
       }
 
       setLoadingText("Analizando Clínica...");
+      const msgId = Date.now().toString();
+      
       const newMsg: Message = {
-        id: Date.now().toString(),
+        id: msgId,
         role: viewMode === 'patient' ? 'patient' : 'doctor',
         content: "Envío imagen del estado actual de la zona.",
         timestamp: new Date().toISOString(),
@@ -486,7 +511,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
       // Reset input value to allow re-upload if needed
       if (inputElement) inputElement.value = '';
       
-      handleImageAnalysis(base64, file.type);
+      handleImageAnalysis(msgId, base64, file.type);
     };
     reader.readAsDataURL(file);
   };
@@ -496,13 +521,18 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
       if (!selectedImage) return;
       setLoadingText("Analizando desde Visor...");
       
-      // Convert current selectedImage (which is dataUrl) to base64 for API
-      // The format is usually "data:image/png;base64,......"
+      // Find the message associated with this image to attach analysis
+      const msg = activePatient?.messages.find(m => m.imageUrl === selectedImage);
+      if (!msg) {
+          console.warn("Could not find message for image");
+          return;
+      }
+
       const parts = selectedImage.split(',');
       if (parts.length === 2) {
           const mimeType = parts[0].split(':')[1].split(';')[0];
           const base64 = parts[1];
-          handleImageAnalysis(base64, mimeType);
+          handleImageAnalysis(msg.id, base64, mimeType);
       }
   };
 
@@ -584,13 +614,6 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
     }
   };
 
-  const toggleAiMessage = (msgId: string) => {
-    setExpandedAiMessages(prev => ({
-        ...prev,
-        [msgId]: !prev[msgId]
-    }));
-  };
-
   const theme = THEME[viewMode];
 
   const renderAvatar = (p: Patient, size: 'sm' | 'lg', isHeader: boolean = false) => {
@@ -610,82 +633,6 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
             </div>
         </div>
       );
-  };
-
-  const RichAiMessage = ({ content }: { content: string }) => {
-    const sections = content.split('\n\n');
-    return (
-      <div className={`max-w-[95%] ${!isActuallyMobile ? 'md:max-w-2xl' : ''} w-full bg-white border border-gray-100 rounded-[2rem] ${isActuallyMobile ? 'p-5' : 'p-5 md:p-8'} shadow-2xl shadow-gray-200/50 relative overflow-hidden animate-in zoom-in duration-500`}>
-        <div className="absolute top-0 right-0 w-32 h-32 bg-red-50 rounded-full -mr-16 -mt-16 opacity-50" />
-        
-        <div className="flex items-center gap-3 mb-6 relative">
-          <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white">
-            <MessageSquareHeart size={20} />
-          </div>
-          <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-red-700">Informe Sanitario Kurae</h4>
-            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Análisis por Inteligencia Clínica</p>
-          </div>
-        </div>
-
-        <div className="space-y-6 relative">
-          {sections.map((section, idx) => {
-            if (section.startsWith('###')) {
-               return <h2 key={idx} className="text-lg font-black tracking-tighter text-gray-900 border-b border-gray-50 pb-2">{section.replace('###', '').trim()}</h2>;
-            }
-            if (section.startsWith('#### Privacidad')) {
-               return (
-                 <div key={idx} className="bg-red-50 border-red-100 text-red-900 p-4 rounded-2xl border flex gap-3 items-start animate-in slide-in-from-left-2">
-                    <ShieldAlert size={20} className="text-red-700 flex-shrink-0" />
-                    <div>
-                        <span className="text-[10px] font-black uppercase tracking-widest block mb-1">Bloqueo de Seguridad</span>
-                        <FormattedText text={section.replace('#### Privacidad', '').trim()} className="text-xs md:text-sm font-medium" />
-                    </div>
-                 </div>
-               );
-            }
-            if (section.startsWith('#### Hallazgos') || section.startsWith('### 👁️')) {
-               return (
-                 <div key={idx} className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                    <div className="flex items-center gap-2 mb-2 text-gray-900">
-                        <Stethoscope size={14} className="text-red-700" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Hallazgos Clínicos</span>
-                    </div>
-                    <FormattedText text={section.replace(/^(####|###)\s*[👁️]?\s*[\w\s]+/, '').trim()} className="text-xs md:text-sm text-gray-600" />
-                 </div>
-               );
-            }
-            if (section.startsWith('#### Signos de Alerta') || section.startsWith('### ⚠️')) {
-               const text = section.replace(/^(####|###)\s*[⚠️]?\s*[\w\s]+/, '').trim();
-               const isCritical = text.toLowerCase().includes('infección') || text.toLowerCase().includes('urgente') || text.toLowerCase().includes('fiebre');
-               return (
-                 <div key={idx} className={`${isCritical ? 'bg-red-50 border-red-100 text-red-900' : 'bg-gray-50 border-gray-100 text-gray-900'} p-4 rounded-2xl border flex gap-3 items-start`}>
-                    <AlertTriangle size={20} className={isCritical ? 'text-red-700' : 'text-gray-400'} />
-                    <div>
-                        <span className="text-[10px] font-black uppercase tracking-widest block mb-1">Estatus de Seguridad</span>
-                        <FormattedText text={text} className="text-xs md:text-sm font-medium" />
-                    </div>
-                 </div>
-               );
-            }
-            if (section.startsWith('#### Plan') || section.startsWith('### 📝')) {
-                return (
-                  <div key={idx} className="space-y-3">
-                     <div className="flex items-center gap-2 text-gray-900">
-                        <ClipboardCheck size={14} className="text-red-700" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Próximos Pasos</span>
-                     </div>
-                     <div className="pl-2">
-                        <FormattedText text={section.replace(/^(####|###)\s*[📝]?\s*[\w\s]+/, '').trim()} className="text-xs md:text-sm text-gray-600" />
-                     </div>
-                  </div>
-                );
-            }
-            return <FormattedText key={idx} text={section} className="text-xs md:text-sm text-gray-600 px-1" />;
-          })}
-        </div>
-      </div>
-    );
   };
 
   return (
@@ -846,57 +793,65 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                     const isMe = m.role === viewMode;
                     const isSystem = m.role === 'ai';
                     
-                    // Logic to see if the NEXT message is AI, to render the trigger button on the patient message
-                    const nextMsg = activePatient.messages[idx + 1];
-                    const isNextAi = nextMsg?.role === 'ai';
-                    
+                    // Don't render "isAnalysis" system messages in the main chat flow anymore,
+                    // they are now accessed via the Sparkles icon on the image.
                     if (isSystem) {
-                        const isExpanded = expandedAiMessages[m.id] || false;
-                        
-                        // In Doctor view, if not explicitly expanded, hide it (trigger is on the patient row)
-                        if (viewMode === 'doctor' && !isExpanded) {
-                            return null;
-                        }
-
-                        return (
+                         // Only render non-analysis system messages (like blocks or general info)
+                         if (m.isAnalysis && !m.content.includes("Imagen Bloqueada")) return null;
+                         
+                         return (
                             <div key={m.id} className="flex justify-center my-2 relative group">
-                                <RichAiMessage content={m.content} />
-                                <button 
-                                    onClick={() => toggleAiMessage(m.id)}
-                                    className="absolute top-2 right-4 md:right-auto md:left-[calc(50%+20rem)] p-2 bg-white/50 hover:bg-white text-gray-400 hover:text-red-700 rounded-full transition-all opacity-0 group-hover:opacity-100"
-                                    title="Colapsar Informe"
-                                >
-                                    <EyeOff size={16} />
-                                </button>
+                                <RichAiMessage content={m.content} isMobile={isActuallyMobile} />
                             </div>
-                        );
+                         );
                     }
                     
-                    // Dynamic Elegant Bubble Style
-                    // Right side (isMe): Red/White gradient tint (Patient view) or clean White (Doctor view). 
-                    // Left side (!isMe): Clean White/Gray.
-                    // To keep it elegant and consistent with the screenshot (light gray bubbles), we use subtle gradients/borders.
+                    // New logic for bubble colors based on Role
+                    let bubbleColors = '';
+                    if (m.role === 'patient') {
+                        bubbleColors = 'bg-emerald-50/80 border-emerald-100 text-emerald-950';
+                    } else if (m.role === 'doctor') {
+                        bubbleColors = 'bg-blue-50/80 border-blue-100 text-blue-950';
+                    } else {
+                        bubbleColors = 'bg-white border-gray-100 text-gray-900';
+                    }
                     
                     const bubbleStyle = isMe
-                        ? `bg-gradient-to-br from-red-50 to-white border border-red-100 text-gray-900 shadow-[0_4px_15px_rgba(220,38,38,0.1)] rounded-[2rem] rounded-tr-none`
-                        : `bg-white border border-gray-100 text-gray-900 shadow-[0_2px_10px_rgba(0,0,0,0.05)] rounded-[2rem] rounded-tl-none`;
+                        ? `${bubbleColors} border shadow-[0_4px_15px_rgba(0,0,0,0.05)] rounded-[2rem] rounded-tr-none`
+                        : `${bubbleColors} border shadow-[0_2px_10px_rgba(0,0,0,0.03)] rounded-[2rem] rounded-tl-none`;
 
                     return (
                         <div key={m.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2`}>
                             <div className={`max-w-[85%] ${!isActuallyMobile ? 'md:max-w-[65%]' : ''} flex ${isMe ? 'flex-col items-end' : 'flex-row items-end gap-2'}`}>
                                 <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                                     {m.imageUrl && (
-                                        <div 
-                                          className="mb-3 relative rounded-[2rem] overflow-hidden cursor-zoom-in group/img transition-all duration-500 hover:scale-[1.01] shadow-[0_8px_30px_rgba(0,0,0,0.12)] border-4 border-white bg-white"
-                                          onClick={() => setSelectedImage(m.imageUrl || null)}
-                                          title="Ampliar en Visor Clínico"
-                                        >
-                                            <img src={m.imageUrl} alt="Clinical Media" className={`rounded-[1.8rem] max-h-48 ${!isActuallyMobile ? 'md:max-h-72' : ''} object-cover w-full h-full`} />
-                                            <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors duration-500 flex items-center justify-center">
-                                                <div className="bg-white/90 p-3 rounded-full shadow-lg opacity-0 group-hover/img:opacity-100 transform scale-75 group-hover/img:scale-100 transition-all duration-300">
-                                                    <Maximize2 size={20} className="text-gray-900" />
+                                        <div className="mb-3 relative group/img">
+                                            <div 
+                                                className="rounded-[2rem] overflow-hidden cursor-zoom-in transition-all duration-500 hover:scale-[1.01] shadow-[0_8px_30px_rgba(0,0,0,0.12)] border-4 border-white bg-white relative"
+                                                onClick={() => setSelectedImage(m.imageUrl || null)}
+                                                title="Ampliar en Visor Clínico"
+                                            >
+                                                <img src={m.imageUrl} alt="Clinical Media" className={`rounded-[1.8rem] max-h-48 ${!isActuallyMobile ? 'md:max-h-72' : ''} object-cover w-full h-full`} />
+                                                <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors duration-500 flex items-center justify-center pointer-events-none">
+                                                    <div className="bg-white/90 p-3 rounded-full shadow-lg opacity-0 group-hover/img:opacity-100 transform scale-75 group-hover/img:scale-100 transition-all duration-300">
+                                                        <Maximize2 size={20} className="text-gray-900" />
+                                                    </div>
                                                 </div>
                                             </div>
+                                            
+                                            {/* AI Analysis Trigger Button - Overlaid on image corner */}
+                                            {m.analysis && (
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setAnalysisToShow(m.analysis || null);
+                                                    }}
+                                                    className="absolute -bottom-3 -right-3 z-20 p-2.5 bg-red-700 text-white rounded-2xl shadow-xl hover:scale-110 active:scale-95 transition-all animate-in zoom-in border-2 border-white"
+                                                    title="Ver Informe IA"
+                                                >
+                                                    <Sparkles size={16} fill="currentColor" className="animate-pulse" />
+                                                </button>
+                                            )}
                                         </div>
                                     )}
                                     <div className={`px-5 py-3 ${!isActuallyMobile ? 'md:px-7 md:py-4' : ''} text-xs ${!isActuallyMobile ? 'md:text-sm' : ''} font-medium leading-relaxed relative group ${bubbleStyle}`}>
@@ -906,21 +861,6 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                                         </span>
                                     </div>
                                 </div>
-
-                                {/* Render Collapsed AI Button right next to Patient Message if applicable */}
-                                {!isMe && isNextAi && viewMode === 'doctor' && (
-                                    <button 
-                                        onClick={() => toggleAiMessage(nextMsg.id)}
-                                        className={`self-center mb-4 p-2 rounded-full transition-all duration-300 shadow-sm border group flex items-center justify-center
-                                            ${expandedAiMessages[nextMsg.id] 
-                                                ? 'bg-red-50 text-red-700 border-red-200' 
-                                                : 'bg-white text-gray-400 border-gray-100 hover:text-red-700 hover:border-red-200'
-                                            }`}
-                                        title="Expandir Informe IA"
-                                    >
-                                        <MessageSquareHeart size={16} />
-                                    </button>
-                                )}
                             </div>
                         </div>
                     );
@@ -964,7 +904,6 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                           </button>
                         )}
                         
-                        {/* Moved Microphone Icon Here as requested */}
                         <button 
                              onClick={() => setIsLiveActive(!isLiveActive)} 
                              className={`p-2 ${!isActuallyMobile ? 'md:p-2.5' : ''} rounded-xl transition-all flex-shrink-0 shadow-sm border ${isLiveActive ? 'bg-red-700 text-white border-red-700 animate-pulse' : 'text-gray-400 border-transparent hover:text-gray-900 hover:bg-gray-100'}`}
@@ -994,6 +933,58 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
             viewMode={viewMode}
             onAnalyze={handleViewerAnalysis}
           />
+      )}
+
+      {/* ANALYSIS MODAL */}
+      {analysisToShow && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-md animate-in fade-in duration-300">
+              <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 border border-gray-100">
+                  {/* Header */}
+                  <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                      <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white shadow-lg">
+                              <MessageSquareHeart size={20} />
+                          </div>
+                          <div>
+                              <h3 className="font-black text-gray-900 uppercase tracking-tighter text-lg leading-tight">Informe Sanitario Kurae</h3>
+                              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Inteligencia Clínica Gemini</p>
+                          </div>
+                      </div>
+                      
+                      {/* Copy to Clipboard and Close */}
+                      <div className="flex items-center gap-2">
+                        <button 
+                            onClick={() => {
+                                if (analysisToShow) {
+                                    navigator.clipboard.writeText(analysisToShow);
+                                    setIsAnalysisCopied(true);
+                                    setTimeout(() => setIsAnalysisCopied(false), 2000);
+                                }
+                            }}
+                            className={`p-2 hover:bg-gray-100 rounded-full transition-all ${isAnalysisCopied ? 'text-green-600 bg-green-50' : 'text-gray-400 hover:text-gray-900'}`}
+                            title="Copiar al portapapeles"
+                        >
+                           {isAnalysisCopied ? <Check size={24} /> : <Copy size={24} />}
+                        </button>
+                        <button onClick={() => setAnalysisToShow(null)} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-red-700 transition-all">
+                            <X size={24} />
+                        </button>
+                      </div>
+                  </div>
+                  
+                  {/* Content */}
+                  <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                      <RichAiMessage content={analysisToShow} isMobile={isActuallyMobile} />
+                  </div>
+
+                  {/* Footer */}
+                  <div className="p-6 border-t border-gray-100 bg-white">
+                      <button onClick={() => setAnalysisToShow(null)} className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95">
+                          Cerrar Informe Clínico
+                      </button>
+                  </div>
+              </div>
+          </div>
       )}
 
       {/* CREATE / EDIT PATIENT MODAL */}

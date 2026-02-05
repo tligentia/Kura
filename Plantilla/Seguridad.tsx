@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { AlertTriangle } from 'lucide-react';
 
 interface Props {
   onLogin: (pin: string) => void;
@@ -69,6 +70,19 @@ export const Security: React.FC<Props> = ({ onLogin }) => {
         </div>
 
         <button onClick={handleBackspace} className="text-[10px] font-bold text-gray-400 hover:text-red-700 uppercase tracking-wider transition-colors">Borrar Entrada</button>
+        
+        {/* WARNING MESSAGE */}
+        <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-xl w-full text-center">
+            <div className="flex justify-center text-yellow-600 mb-2">
+                <AlertTriangle size={20} />
+            </div>
+            <p className="text-[9px] font-bold text-yellow-800 uppercase leading-relaxed tracking-wide">
+                Maqueta en fase de desarrollo, estudio y ajustes.
+                <br/>
+                <span className="text-red-600 font-black">Que nunca debe utilizarse en casos reales.</span>
+            </p>
+        </div>
+
       </div>
       <style>{`
         @keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); } 20%, 40%, 60%, 80% { transform: translateX(6px); } }
