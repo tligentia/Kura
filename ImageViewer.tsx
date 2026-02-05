@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   X, ZoomIn, ZoomOut, RotateCw, Move, 
   Sun, Contrast, Eye, Grid3X3, RefreshCcw, 
-  Maximize2, ImageMinus, Ruler, Brain, Trash2, Check, Lock
+  Maximize2, ImageMinus, Ruler, Trash2, Check, Lock
 } from 'lucide-react';
 
 interface ImageViewerProps {
@@ -50,20 +50,11 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const handleToolSelect = (tool: 'move' | 'measure' | 'ai') => {
+  const handleToolSelect = (tool: 'move' | 'measure') => {
     if (viewMode === 'patient') {
         showNotification("Función exclusiva para personal sanitario");
         return;
     }
-
-    if (tool === 'ai') {
-        if (onAnalyze) {
-            onAnalyze();
-            onClose(); // Optional: Close viewer to show chat
-        }
-        return;
-    }
-
     setActiveTool(tool);
   };
 
@@ -83,6 +74,10 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
   // Zoom handlers
   const handleZoom = (delta: number) => {
     setScale(prev => Math.min(Math.max(0.5, prev + delta), 5));
+  };
+
+  const handleRotate = () => {
+    setRotation(prev => (prev + 90) % 360);
   };
 
   const getImgCoordinates = (e: React.MouseEvent) => {
@@ -359,14 +354,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
                 >
                     <Ruler size={18} />
                 </button>
-                <div className="w-px h-6 bg-gray-200 mx-1" />
-                <button 
-                    onClick={() => handleToolSelect('ai')} 
-                    className="p-2 rounded-lg text-gray-400 hover:text-red-700 hover:bg-white transition-all"
-                    title="Análisis IA (Profesional)"
-                >
-                    <Brain size={18} />
-                </button>
             </div>
 
             {/* Adjustments Group */}
@@ -403,6 +390,28 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
 
             {/* View Tools */}
             <div className="flex items-center gap-1 bg-gray-50 p-1.5 rounded-xl border border-gray-100 hidden sm:flex">
+                 <button 
+                    onClick={() => handleZoom(-0.25)} 
+                    className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-white transition-all"
+                    title="Alejar"
+                >
+                    <ZoomOut size={18} />
+                </button>
+                 <button 
+                    onClick={() => handleZoom(0.25)} 
+                    className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-white transition-all"
+                    title="Acercar"
+                >
+                    <ZoomIn size={18} />
+                </button>
+                 <button 
+                    onClick={handleRotate} 
+                    className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-white transition-all"
+                    title="Rotar"
+                >
+                    <RotateCw size={18} />
+                </button>
+                <div className="w-px h-6 bg-gray-200 mx-1" />
                 <button 
                     onClick={() => setShowGrid(!showGrid)} 
                     className={`p-2 rounded-lg transition-all ${showGrid ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, ShieldCheck, RefreshCcw, Database, Loader2, CheckCircle2, XCircle, Sparkles, Send, Cpu, ChevronDown, Globe, Plus, Zap, KeyRound, Unlock } from 'lucide-react';
-import { crypto, validateKey, listAvailableModels, askGemini, getShortcutKey } from './Parameters';
+import { crypto, validateKey, listAvailableModels, askGemini, resolveAccessCode } from './Parameters';
 import { Obfuscator } from './Obfuscator';
 
 interface AjustesProps {
@@ -76,11 +76,12 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, userIp }) => 
     if (!accessCode.trim()) return;
     setIsSyncingAccess(true);
     
-    // Check for development shortcuts
-    const devKey = getShortcutKey(accessCode);
+    // Check for development shortcuts asynchronously via Vault
+    const devKey = await resolveAccessCode(accessCode);
+    
     if (devKey) {
-      // In a real scenario, this key would be used to override process.env.API_KEY or saved to a vault
-      // For this sandbox, we simply validate the system status
+      // Save the resolved key to storage to persist it as the effective API key
+      localStorage.setItem('app_custom_api_key', devKey);
       await handleConfigCheck();
       setAccessCode('');
     } else {

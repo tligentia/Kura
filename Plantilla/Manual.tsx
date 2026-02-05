@@ -152,7 +152,7 @@ export const Manual: React.FC<ManualProps> = ({ isOpen, onClose }) => {
                 <h2 className="text-4xl font-black text-gray-900 tracking-tighter leading-none">Ecosistema<br/><span className="text-red-700 underline decoration-gray-900 decoration-2">Kurae</span></h2>
               </div>
               <p className="text-gray-600 leading-relaxed text-sm">
-                Kurae es una herramienta de asistencia clínica diseñada para optimizar el <strong>seguimiento de heridas y úlceras</strong>. Su objetivo es reducir la carga administrativa del personal de enfermería y mejorar la precisión en la evaluación mediante Inteligencia Artificial Generativa.
+                Kurae es una herramienta de asistencia clínica diseñada para optimizar el <strong>seguimiento de heridas y úlceras</strong>. Su objetivo es reducir la carga administrativa del personal sanitario y mejorar la precisión en la evaluación mediante Inteligencia Artificial Generativa.
               </p>
               <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 flex flex-col md:flex-row gap-6">
                 <div className="flex-1">

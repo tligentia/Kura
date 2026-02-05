@@ -50,6 +50,13 @@ export const crypto = {
 // --- API & MODELS ---
 
 /**
+ * Helper to get the API Key prioritizing LocalStorage (Dev Keys) over Env
+ */
+export const getEffectiveApiKey = (): string | undefined => {
+  return localStorage.getItem('app_custom_api_key') || process.env.API_KEY;
+};
+
+/**
  * Recupera una clave específica de la bóveda de Google Sheets
  */
 export const fetchVaultKey = async (targetLabel: string, seed: string): Promise<string | null> => {
@@ -64,8 +71,13 @@ export const fetchVaultKey = async (targetLabel: string, seed: string): Promise<
       const cols = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/"/g, '').trim());
       const label = cols[0];
       const obfuscatedValue = cols[1];
-      if (label && label.toLowerCase() === targetLabel.toLowerCase()) {
-        return crypto.deobfuscate(obfuscatedValue, seed);
+      
+      // Check exact match or case-insensitive match for labels like 'OK' or 'CV'
+      if (label && label.toLowerCase().trim() === targetLabel.toLowerCase().trim()) {
+        // Here we pass the specific seed (often 'tligent' for dev keys) or the system SLD
+        // If the key in sheet was encrypted with 'tligent', we must use 'tligent' to decrypt.
+        // Assuming dev keys are standardized with "tligent".
+        return crypto.deobfuscate(obfuscatedValue, "tligent");
       }
     }
   } catch (e) {
@@ -75,12 +87,11 @@ export const fetchVaultKey = async (targetLabel: string, seed: string): Promise<
 };
 
 export const listAvailableModels = async (): Promise<string[]> => {
-  // Using process.env.API_KEY directly as required by guidelines
-  const apiKey = process.env.API_KEY;
+  const apiKey = getEffectiveApiKey();
   if (!apiKey) return ['gemini-3-flash-preview', 'gemini-3-pro-preview'];
   try {
     // Create new instance right before call as per guidelines
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: apiKey });
     const result = await ai.models.list();
     const models: string[] = [];
     for await (const m of result) {
@@ -102,11 +113,10 @@ export const listAvailableModels = async (): Promise<string[]> => {
 };
 
 export const validateKey = async (): Promise<boolean> => {
-  // Using process.env.API_KEY directly as required by guidelines
-  const apiKey = process.env.API_KEY;
+  const apiKey = getEffectiveApiKey();
   if (!apiKey) return false;
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: apiKey });
     await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: 'ping' });
     return true;
   } catch {
@@ -115,10 +125,9 @@ export const validateKey = async (): Promise<boolean> => {
 };
 
 export const askGemini = async (prompt: string, modelOverride?: string): Promise<string> => {
-  // Using process.env.API_KEY directly as required by guidelines
-  const apiKey = process.env.API_KEY;
+  const apiKey = getEffectiveApiKey();
   if (!apiKey) throw new Error("API_KEY_REQUIRED");
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: apiKey });
   const model = modelOverride || localStorage.getItem('app_selected_model') || 'gemini-3-flash-preview';
 
   const isTTS = model.includes('tts');
@@ -157,10 +166,7 @@ export const askGemini = async (prompt: string, modelOverride?: string): Promise
   }
 };
 
-export const getShortcutKey = (shortcut: string): string | null => {
-  const code = shortcut.toLowerCase().trim();
-  const DEV_KEY = "tligent";
-  if (code === 'ok') return crypto.deobfuscate('NSUTBjYXNicpJlE3BxYWXhhSCFhFPzNQVyYZOBI5PR8ECg41Lw4i', DEV_KEY);
-  if (code === 'cv') return crypto.deobfuscate('NSUTBjYXNRczGh8LBEwaBzEuFSpDIFUkOEgKIy5fOi0pHTYgIygi', DEV_KEY);
-  return null;
+export const resolveAccessCode = async (code: string): Promise<string | null> => {
+  // Use the Vault mechanism to retrieve 'OK' or 'CV' or any other key defined in the sheet
+  return await fetchVaultKey(code, "tligent");
 };

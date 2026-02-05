@@ -9,6 +9,7 @@ import {
 import { GoogleGenAI } from "@google/genai";
 import { Patient, Message } from './types';
 import { ImageViewer } from './ImageViewer';
+import { getEffectiveApiKey } from './Plantilla/Parameters';
 
 // --- THEME CONFIGURATION (White background, contents in Black, Red, and Gray) ---
 const THEME = {
@@ -276,13 +277,13 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
   const handlePolishText = async () => {
     if (!inputText.trim() || isAiPolishing) return;
     setIsAiPolishing(true);
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: getEffectiveApiKey() });
     try {
       const lastPatientMessage = activePatient?.messages
         .filter(m => m.role === 'patient')
         .pop()?.content || "No hay mensajes previos del paciente.";
 
-      const prompt = `Actúa como enfermera experta.
+      const prompt = `Actúa como sanitario experto.
       Contexto: El paciente ha dicho: "${lastPatientMessage}".
       Borrador del doctor: "${inputText}".
       Tarea: Reescribe el borrador para responder al paciente.
@@ -308,7 +309,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
   };
 
   const checkImagePrivacy = async (base64: string, mimeType: string): Promise<boolean> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: getEffectiveApiKey() });
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
@@ -329,7 +330,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
 
   const handleImageAnalysis = async (base64: string, mimeType: string) => {
     setIsAiAnalyzing(true);
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: getEffectiveApiKey() });
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -337,19 +338,21 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
           parts: [
             { inlineData: { data: base64, mimeType } },
             { text: `
-              Eres una especialista en clínica de heridas. Analiza la imagen.
-              Debes responder con una estructura clara y visual usando estos encabezados exactos:
-              ### Informe de Seguimiento
-              [Un saludo empático de enfermería]
+              Eres un especialista sanitario en clínica de heridas. Analiza la imagen clínica adjunta.
               
-              #### Hallazgos Visuales
-              [Descripción técnica pero humana]
+              Tu respuesta DEBE estar en formato Markdown limpio y muy legible para un humano. Usa emojis para las secciones.
               
-              #### Signos de Alerta
-              [Menciona si hay infección, necrosis o si todo va bien. Sé muy claro]
+              Estructura obligatoria:
+              ### 👁️ Análisis Visual
+              (Describe el lecho de la herida, bordes y piel perilesional en una lista de puntos breves)
+
+              ### ⚠️ Alertas Clínicas
+              (Indica claramente si hay infección, necrosis, eritema o mal olor. Si no hay alertas, indícalo también con un check ✅)
+
+              ### 📝 Recomendación de Cura
+              (Pasos precisos y productos recomendados para la cura en formato lista)
               
-              #### Plan de Acción
-              - Pasos inmediatos para el paciente.
+              Mantén el tono profesional pero cercano. Sé conciso.
             ` }
           ]
         }
@@ -381,11 +384,11 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
         .map(m => `${m.role.toUpperCase()}: ${m.content}`)
         .join('\n');
 
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: getEffectiveApiKey() });
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
-            contents: `Actúa como 'Kurae', una enfermera virtual experta en curas. 
+            contents: `Actúa como 'Kurae', un sanitario virtual experto en curas. 
             Historial de chat reciente:
             ${historyContext}
             
@@ -620,7 +623,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
             <MessageSquareHeart size={20} />
           </div>
           <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-red-700">Informe Enfermería Kurae</h4>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-red-700">Informe Sanitario Kurae</h4>
             <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Análisis por Inteligencia Clínica</p>
           </div>
         </div>
@@ -641,19 +644,19 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                  </div>
                );
             }
-            if (section.startsWith('#### Hallazgos')) {
+            if (section.startsWith('#### Hallazgos') || section.startsWith('### 👁️')) {
                return (
                  <div key={idx} className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                     <div className="flex items-center gap-2 mb-2 text-gray-900">
                         <Stethoscope size={14} className="text-red-700" />
                         <span className="text-[10px] font-black uppercase tracking-widest">Hallazgos Clínicos</span>
                     </div>
-                    <FormattedText text={section.replace('#### Hallazgos Visuales', '').trim()} className="text-xs md:text-sm text-gray-600" />
+                    <FormattedText text={section.replace(/^(####|###)\s*[👁️]?\s*[\w\s]+/, '').trim()} className="text-xs md:text-sm text-gray-600" />
                  </div>
                );
             }
-            if (section.startsWith('#### Signos de Alerta')) {
-               const text = section.replace('#### Signos de Alerta', '').trim();
+            if (section.startsWith('#### Signos de Alerta') || section.startsWith('### ⚠️')) {
+               const text = section.replace(/^(####|###)\s*[⚠️]?\s*[\w\s]+/, '').trim();
                const isCritical = text.toLowerCase().includes('infección') || text.toLowerCase().includes('urgente') || text.toLowerCase().includes('fiebre');
                return (
                  <div key={idx} className={`${isCritical ? 'bg-red-50 border-red-100 text-red-900' : 'bg-gray-50 border-gray-100 text-gray-900'} p-4 rounded-2xl border flex gap-3 items-start`}>
@@ -665,7 +668,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                  </div>
                );
             }
-            if (section.startsWith('#### Plan')) {
+            if (section.startsWith('#### Plan') || section.startsWith('### 📝')) {
                 return (
                   <div key={idx} className="space-y-3">
                      <div className="flex items-center gap-2 text-gray-900">
@@ -673,7 +676,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                         <span className="text-[10px] font-black uppercase tracking-widest">Próximos Pasos</span>
                      </div>
                      <div className="pl-2">
-                        <FormattedText text={section.replace('#### Plan de Acción', '').trim()} className="text-xs md:text-sm text-gray-600" />
+                        <FormattedText text={section.replace(/^(####|###)\s*[📝]?\s*[\w\s]+/, '').trim()} className="text-xs md:text-sm text-gray-600" />
                      </div>
                   </div>
                 );
@@ -834,9 +837,6 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                                 </button>
                             </>
                         )}
-                         <button onClick={() => setIsLiveActive(!isLiveActive)} className={`p-2 ${!isActuallyMobile ? 'md:p-3' : ''} rounded-xl transition-all shadow-sm active:scale-95 border flex items-center gap-2 ${isLiveActive ? 'bg-red-700 text-white border-red-700 animate-pulse' : 'bg-white border-gray-200 text-gray-400 hover:text-gray-900'}`}>
-                            <Mic size={isActuallyMobile ? 16 : 18} />
-                        </button>
                     </div>
                 </header>
             )}
@@ -963,6 +963,15 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                               {isAiPolishing ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} fill={inputText.trim() ? "currentColor" : "none"} />}
                           </button>
                         )}
+                        
+                        {/* Moved Microphone Icon Here as requested */}
+                        <button 
+                             onClick={() => setIsLiveActive(!isLiveActive)} 
+                             className={`p-2 ${!isActuallyMobile ? 'md:p-2.5' : ''} rounded-xl transition-all flex-shrink-0 shadow-sm border ${isLiveActive ? 'bg-red-700 text-white border-red-700 animate-pulse' : 'text-gray-400 border-transparent hover:text-gray-900 hover:bg-gray-100'}`}
+                             title="Modo Voz (Live)"
+                        >
+                            <Mic size={16} />
+                        </button>
 
                         <button 
                             onClick={handleSendMessage}
