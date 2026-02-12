@@ -46,8 +46,6 @@ export const Shell: React.FC<ShellProps> = ({
         if (savedIps.includes(obfuscatedCurrent)) {
           console.log("SISTEMA: IP Memorizada detectada. Concediendo acceso automático...");
           localStorage.setItem('app_is_auth_v2', 'true');
-          // If auto-login via IP, we might not have a PIN. Default to restrictive or standard.
-          // For now, reload handles auth state, but App.tsx handles PIN default.
           window.location.reload();
         }
       }
@@ -94,7 +92,7 @@ export const Shell: React.FC<ShellProps> = ({
     }
     if (text) {
       text.innerText = valid ? 'System Active & Persistent' : 'System Standby • Check API Config';
-      text.classList.toggle('text-red-700', !valid);
+      text.classList.toggle('text-red-700', !valid); // Keep red for error states
     }
   };
 
@@ -109,8 +107,8 @@ export const Shell: React.FC<ShellProps> = ({
         <div className="w-full md:w-auto flex justify-between md:justify-start items-center">
           <div>
             <h1 className="text-2xl font-black tracking-tighter text-gray-900 flex items-center gap-2">
-              <ActivityIcon className="text-red-700" size={28} />
-              Kurae<span className="text-red-700"> +</span>
+              <ActivityIcon className="text-teal-600" size={28} />
+              Kurae<span className="text-teal-600"> +</span>
             </h1>
             <div className="flex items-center gap-4 mt-0.5">
               <div className="flex items-center gap-1.5">
@@ -124,7 +122,7 @@ export const Shell: React.FC<ShellProps> = ({
                   </span>
                 ) : (
                   <span className="flex items-center gap-1 text-[8px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-2 py-0.5 rounded-md">
-                    <Sparkles size={10} className="animate-spin text-red-700" /> SYNCING
+                    <Sparkles size={10} className="animate-spin text-teal-600" /> SYNCING
                   </span>
                 )}
               </div>
@@ -143,7 +141,7 @@ export const Shell: React.FC<ShellProps> = ({
                 </button>
                 <button 
                     onClick={() => onViewModeChange('patient')}
-                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${viewMode === 'patient' ? 'bg-red-700 text-white shadow-md' : 'text-gray-500 hover:text-red-700'}`}
+                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${viewMode === 'patient' ? 'bg-teal-600 text-white shadow-md' : 'text-gray-500 hover:text-teal-600'}`}
                 >
                     <Heart size={12} /> <span className="hidden sm:inline">Paciente</span>
                 </button>
@@ -165,7 +163,7 @@ export const Shell: React.FC<ShellProps> = ({
             onClick={() => setShowManual(true)}
             className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-900 px-3 py-2 rounded-xl transition-all active:scale-95 group shadow-sm"
           >
-            <HelpCircle size={16} className="text-red-700 group-hover:scale-110 transition-transform" />
+            <HelpCircle size={16} className="text-teal-600 group-hover:scale-110 transition-transform" />
             <span className="text-[9px] font-black uppercase tracking-widest hidden sm:inline">Manual</span>
           </button>
           

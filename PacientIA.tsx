@@ -12,27 +12,27 @@ import { Patient, Message } from './types';
 import { ImageViewer } from './ImageViewer';
 import { getEffectiveApiKey } from './Plantilla/Parameters';
 
-// --- THEME CONFIGURATION (White background, contents in Black, Red, and Gray) ---
+// --- THEME CONFIGURATION (Medical Teal Style) ---
 const THEME = {
   doctor: {
     bg: 'bg-white',
     sidebar: 'bg-white',
-    primary: 'bg-red-700',
-    primaryLight: 'bg-red-50',
+    primary: 'bg-teal-700',
+    primaryLight: 'bg-teal-50',
     text: 'text-gray-900',
     border: 'border-gray-100',
-    accent: 'text-red-700',
+    accent: 'text-teal-700',
     bubble: 'bg-gray-100 text-gray-900 border border-gray-200 rounded-[1.5rem] rounded-br-none',
   },
   patient: {
     bg: 'bg-white',
     sidebar: 'hidden', 
-    primary: 'bg-red-700',
-    primaryLight: 'bg-red-50',
+    primary: 'bg-teal-700',
+    primaryLight: 'bg-teal-50',
     text: 'text-gray-900',
     border: 'border-gray-200',
-    accent: 'text-red-700',
-    bubble: 'bg-red-50 text-gray-900 border border-red-100 rounded-[1.5rem] rounded-bl-none',
+    accent: 'text-teal-700',
+    bubble: 'bg-teal-50 text-gray-900 border border-teal-100 rounded-[1.5rem] rounded-bl-none',
   }
 };
 
@@ -59,7 +59,7 @@ const FormattedText: React.FC<{ text: string, className?: string }> = ({ text, c
 
         // Detect Headers (###)
         if (trimmed.startsWith('###')) {
-            return <h4 key={i} className="text-red-700 font-black uppercase tracking-widest text-[10px] mt-3 mb-1">{trimmed.replace(/^#+\s*/, '')}</h4>;
+            return <h4 key={i} className="text-teal-700 font-black uppercase tracking-widest text-[10px] mt-3 mb-1">{trimmed.replace(/^#+\s*/, '')}</h4>;
         }
 
         // Detect Numbered Lists (e.g. "1. **Title:** Desc")
@@ -67,7 +67,7 @@ const FormattedText: React.FC<{ text: string, className?: string }> = ({ text, c
         if (numMatch) {
             return (
                 <div key={i} className="flex gap-2 items-start ml-1 group/item">
-                    <span className="font-bold text-red-700 min-w-[1.2rem] mt-[1px]">{numMatch[1]}</span>
+                    <span className="font-bold text-teal-700 min-w-[1.2rem] mt-[1px]">{numMatch[1]}</span>
                     <div className="leading-relaxed text-gray-700 group-hover/item:text-gray-900 transition-colors">{parseInline(numMatch[2])}</div>
                 </div>
             );
@@ -77,7 +77,7 @@ const FormattedText: React.FC<{ text: string, className?: string }> = ({ text, c
         if (trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
           return (
             <div key={i} className="flex items-start gap-2 pl-2">
-              <span className="text-red-400 opacity-80 mt-1.5 text-[0.6em] flex-shrink-0">●</span>
+              <span className="text-teal-400 opacity-80 mt-1.5 text-[0.6em] flex-shrink-0">●</span>
               <span className="leading-relaxed">{parseInline(trimmed.substring(2))}</span>
             </div>
           );
@@ -95,7 +95,7 @@ const RichAiMessage: React.FC<{ content: string, isMobile: boolean }> = ({ conte
   return (
     <div className={`w-full ${isMobile ? 'max-w-full' : 'max-w-3xl'} mx-auto bg-white border border-gray-100 rounded-[1.5rem] p-4 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)]`}>
         <div className="flex items-center gap-2 mb-3 border-b border-gray-50 pb-2">
-            <div className="w-6 h-6 rounded-full bg-red-50 flex items-center justify-center text-red-700">
+            <div className="w-6 h-6 rounded-full bg-teal-50 flex items-center justify-center text-teal-700">
                 <Sparkles size={12} />
             </div>
             <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Análisis Inteligente</span>
@@ -143,10 +143,11 @@ interface PacientIAProps {
 
 export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout = false }) => {
   const [patients, setPatients] = useState<Patient[]>(() => {
-    const saved = localStorage.getItem('pacientia_data_v2'); // Updated storage key for new structure
+    const saved = localStorage.getItem('pacientia_data_v2'); 
     if (saved) return JSON.parse(saved);
     
     // Extended initial data with 12 cases total (Anonymized Names)
+    // Updated colors to match medical teal/blue themes
     return [
       {
         id: '1', name: 'Manuel García', age: 64, condition: 'Pie Diabético Grado 2', insurance: 'Sanitas', fileNumber: 'EXP-2024-001', isPriority: true,
@@ -155,7 +156,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
       },
       {
         id: '2', name: 'María López', age: 72, condition: 'Úlcera Pre-ulcerativa', insurance: 'Adeslas', fileNumber: 'EXP-2024-045',
-        lastActivity: new Date().toISOString(), avatarColor: 'bg-gradient-to-br from-red-800 to-red-950',
+        lastActivity: new Date().toISOString(), avatarColor: 'bg-gradient-to-br from-teal-800 to-teal-950',
         messages: [{ id: 'e1', role: 'patient', content: 'La zona del talón está muy caliente.', timestamp: new Date().toISOString() }], reminders: []
       },
       {
@@ -168,15 +169,14 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
         lastActivity: new Date().toISOString(), avatarColor: 'bg-black',
         messages: [{ id: 'l1', role: 'doctor', content: 'Mantenga el pie en descarga total.', timestamp: new Date(Date.now() - 7200000).toISOString() }], reminders: []
       },
-      // New Cases
       {
         id: '5', name: 'Laura Jiménez', age: 34, condition: 'Quemadura 2º Grado (Antebrazo)', insurance: 'Allianz', fileNumber: 'URG-2024-554',
-        lastActivity: new Date().toISOString(), avatarColor: 'bg-gradient-to-br from-orange-800 to-red-900',
+        lastActivity: new Date().toISOString(), avatarColor: 'bg-gradient-to-br from-orange-800 to-amber-900',
         messages: [{ id: 's1', role: 'patient', content: 'La ampolla se ha roto accidentalmente.', timestamp: new Date().toISOString() }], reminders: []
       },
       {
         id: '6', name: 'Miguel Ángel Torres', age: 45, condition: 'Psoriasis en Placas (Exacerbación)', insurance: 'Sanitas', fileNumber: 'DERM-2023-099',
-        lastActivity: new Date().toISOString(), avatarColor: 'bg-gradient-to-br from-purple-900 to-black',
+        lastActivity: new Date().toISOString(), avatarColor: 'bg-gradient-to-br from-indigo-900 to-black',
         messages: [{ id: 'p1', role: 'doctor', content: 'Envíame foto de las placas en los codos.', timestamp: new Date().toISOString() }], reminders: []
       },
       {
@@ -186,12 +186,12 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
       },
       {
         id: '8', name: 'Francisco Ruiz', age: 52, condition: 'Herida Quirúrgica (Dehiscencia)', insurance: 'Axa', fileNumber: 'CIR-2024-771',
-        lastActivity: new Date().toISOString(), avatarColor: 'bg-gradient-to-br from-green-900 to-black',
+        lastActivity: new Date().toISOString(), avatarColor: 'bg-gradient-to-br from-emerald-900 to-black',
         messages: [{ id: 'jb1', role: 'doctor', content: 'Vigila si hay exudado purulento en la sutura.', timestamp: new Date().toISOString() }], reminders: []
       },
       {
         id: '9', name: 'Ana Sánchez', age: 41, condition: 'Dermatitis Atópica Severa', insurance: 'Mapfre', fileNumber: 'DERM-2024-332',
-        lastActivity: new Date().toISOString(), avatarColor: 'bg-gradient-to-br from-red-600 to-red-800',
+        lastActivity: new Date().toISOString(), avatarColor: 'bg-gradient-to-br from-teal-600 to-teal-800',
         messages: [{ id: 'pc1', role: 'patient', content: 'El brote en el cuello ha empeorado.', timestamp: new Date().toISOString() }], reminders: []
       },
       {
@@ -206,7 +206,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
       },
       {
         id: '12', name: 'Pilar Navarro', age: 67, condition: 'Pie Diabético (Onicocriptosis)', insurance: 'Adeslas', fileNumber: 'POD-2024-888',
-        lastActivity: new Date().toISOString(), avatarColor: 'bg-gradient-to-br from-yellow-900 to-orange-900',
+        lastActivity: new Date().toISOString(), avatarColor: 'bg-gradient-to-br from-amber-900 to-orange-900',
         messages: [{ id: 'll1', role: 'doctor', content: 'Necesito ver si el dedo gordo sigue inflamado.', timestamp: new Date().toISOString() }], reminders: []
       }
     ];
@@ -574,7 +574,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
       const newId = (Date.now()).toString();
       const colors = [
         'bg-gradient-to-br from-gray-700 to-black',
-        'bg-gradient-to-br from-red-800 to-red-950',
+        'bg-gradient-to-br from-teal-800 to-teal-950',
         'bg-gradient-to-br from-gray-400 to-gray-600',
         'bg-black'
       ];
@@ -638,7 +638,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
       const iconSize = isActuallyMobile && isLarge ? 14 : 14; 
       
       return (
-        <div className={`${containerClass} shadow-sm ${p.avatarColor} ${isActiveInSidebar ? 'ring-2 ring-red-700/40 ring-offset-1' : ''} flex items-center justify-center text-white flex-shrink-0 overflow-hidden relative group/avatar`}>
+        <div className={`${containerClass} shadow-sm ${p.avatarColor} ${isActiveInSidebar ? 'ring-2 ring-teal-700/40 ring-offset-1' : ''} flex items-center justify-center text-white flex-shrink-0 overflow-hidden relative group/avatar`}>
             <div className="flex items-center justify-center transition-transform group-hover/avatar:scale-110 duration-500">
                 {getPatientSymbol(p.name, p.condition, iconSize)}
             </div>
@@ -661,18 +661,18 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
             <div className={`p-4 ${!isActuallyMobile ? 'md:p-4' : ''} sticky top-0 bg-white z-10 border-b border-gray-50`}>
                 <div className="flex gap-2 items-center">
                     <div className="relative group flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-red-700 transition-colors" size={12} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-teal-700 transition-colors" size={12} />
                         <input 
                             type="text" 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             placeholder="Buscar..."
-                            className={`w-full bg-gray-50 border border-gray-100 pl-9 pr-3 py-1.5 ${!isActuallyMobile ? 'md:py-2' : ''} rounded-xl text-[10px] font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-red-700/5 focus:border-red-700/30 transition-all`}
+                            className={`w-full bg-gray-50 border border-gray-100 pl-9 pr-3 py-1.5 ${!isActuallyMobile ? 'md:py-2' : ''} rounded-xl text-[10px] font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-teal-700/5 focus:border-teal-700/30 transition-all`}
                         />
                     </div>
                     <button 
                       onClick={openCreateModal} 
-                      className="p-2 bg-red-50 text-red-700 rounded-xl hover:bg-red-100 transition-colors shadow-sm active:scale-95"
+                      className="p-2 bg-teal-50 text-teal-700 rounded-xl hover:bg-teal-100 transition-colors shadow-sm active:scale-95"
                       title="Registrar Nuevo Paciente"
                     >
                         <Plus size={16} />
@@ -698,8 +698,8 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                         onClick={() => handlePatientSelect(p.id)}
                         className={`cursor-pointer py-1.5 px-2.5 rounded-xl border transition-all duration-300 group relative overflow-hidden ${
                           isActive 
-                            ? 'bg-gray-50 border-red-700/50 shadow-sm' 
-                            : 'bg-white border-gray-100 hover:border-red-200 hover:bg-gray-50/50'
+                            ? 'bg-gray-50 border-teal-700/50 shadow-sm' 
+                            : 'bg-white border-gray-100 hover:border-teal-200 hover:bg-gray-50/50'
                         }`}
                     >
                         <button 
@@ -723,7 +723,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                             <div className="flex-1 min-w-0 pr-4">
                                 <div className="flex justify-between items-start">
                                     <div className="min-w-0">
-                                        <h4 className="font-black text-[10px] leading-tight truncate uppercase tracking-tight text-gray-900 group-hover:text-red-700 transition-colors">
+                                        <h4 className="font-black text-[10px] leading-tight truncate uppercase tracking-tight text-gray-900 group-hover:text-teal-700 transition-colors">
                                           {p.name}
                                         </h4>
                                         <span className="text-[8px] font-bold uppercase tracking-widest text-gray-400">
@@ -767,7 +767,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                                 {viewMode === 'patient' ? 'Buen día, ' : ''}{activePatient.name}
                             </h2>
                             <div className={`flex items-center gap-2 ${!isActuallyMobile ? 'md:gap-3' : ''} mt-0.5 overflow-x-auto no-scrollbar`}>
-                                <span className={`text-[9px] ${!isActuallyMobile ? 'md:text-[10px]' : ''} font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md flex-shrink-0 bg-red-700 text-white`}>
+                                <span className={`text-[9px] ${!isActuallyMobile ? 'md:text-[10px]' : ''} font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md flex-shrink-0 bg-teal-700 text-white`}>
                                     {activePatient.age} Años
                                 </span>
                                 <span className={`text-[8px] ${!isActuallyMobile ? 'md:text-[10px]' : ''} font-bold text-gray-400 uppercase flex items-center gap-1 truncate min-w-0`}>
@@ -820,7 +820,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                     // New logic for bubble colors based on Role
                     let bubbleColors = '';
                     if (m.role === 'patient') {
-                        bubbleColors = 'bg-emerald-50/80 border-emerald-100 text-emerald-950';
+                        bubbleColors = 'bg-teal-50/80 border-teal-100 text-teal-950';
                     } else if (m.role === 'doctor') {
                         bubbleColors = 'bg-blue-50/80 border-blue-100 text-blue-950';
                     } else {
@@ -857,7 +857,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                                                         e.stopPropagation();
                                                         setAnalysisToShow(m.analysis || null);
                                                     }}
-                                                    className="absolute -bottom-3 -right-3 z-20 p-2.5 bg-red-700 text-white rounded-2xl shadow-xl hover:scale-110 active:scale-95 transition-all animate-in zoom-in border-2 border-white"
+                                                    className="absolute -bottom-3 -right-3 z-20 p-2.5 bg-teal-700 text-white rounded-2xl shadow-xl hover:scale-110 active:scale-95 transition-all animate-in zoom-in border-2 border-white"
                                                     title="Ver Informe IA"
                                                 >
                                                     <Sparkles size={16} fill="currentColor" className="animate-pulse" />
@@ -879,7 +879,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                 {isAiAnalyzing && (
                     <div className="flex justify-center py-2">
                         <div className="flex items-center gap-3 bg-white px-5 py-2 rounded-full shadow-lg border border-gray-100">
-                            <Sparkles size={14} className="text-red-700 animate-spin" />
+                            <Sparkles size={14} className="text-teal-700 animate-spin" />
                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">{loadingText}</span>
                         </div>
                     </div>
@@ -889,8 +889,8 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
 
             <div className={`px-4 py-2 ${!isActuallyMobile ? 'md:px-8 md:py-3' : ''} bg-white border-t border-gray-50 sticky bottom-0 z-50`}>
                 <div className="max-w-4xl mx-auto relative">
-                    <div className={`relative flex items-end gap-2 bg-gray-50 border border-gray-100 p-1 ${!isActuallyMobile ? 'md:p-1.5' : ''} pr-2 ${!isActuallyMobile ? 'md:pr-3' : ''} rounded-2xl md:rounded-[2.5rem] shadow-sm transition-all focus-within:ring-4 focus-within:ring-red-700/5 focus-within:bg-white focus-within:border-red-700/20`}>
-                        <label className={`p-2 ${!isActuallyMobile ? 'md:p-2.5' : ''} rounded-full cursor-pointer transition-colors text-gray-400 hover:text-red-700 hover:bg-red-50 flex-shrink-0`}>
+                    <div className={`relative flex items-end gap-2 bg-gray-50 border border-gray-100 p-1 ${!isActuallyMobile ? 'md:p-1.5' : ''} pr-2 ${!isActuallyMobile ? 'md:pr-3' : ''} rounded-2xl md:rounded-[2.5rem] shadow-sm transition-all focus-within:ring-4 focus-within:ring-teal-700/5 focus-within:bg-white focus-within:border-teal-700/20`}>
+                        <label className={`p-2 ${!isActuallyMobile ? 'md:p-2.5' : ''} rounded-full cursor-pointer transition-colors text-gray-400 hover:text-teal-700 hover:bg-teal-50 flex-shrink-0`}>
                             <ImageIcon size={18} />
                             <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
                         </label>
@@ -909,7 +909,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                               onClick={handlePolishText}
                               disabled={!inputText.trim() || isAiPolishing}
                               title="Convertir a Tono Profesional Médico"
-                              className={`p-2 ${!isActuallyMobile ? 'md:p-2.5' : ''} rounded-xl transition-all flex-shrink-0 shadow-sm border ${inputText.trim() ? 'bg-white border-red-100 text-red-700 hover:bg-red-50 animate-pulse' : 'text-gray-300 border-transparent cursor-not-allowed'}`}
+                              className={`p-2 ${!isActuallyMobile ? 'md:p-2.5' : ''} rounded-xl transition-all flex-shrink-0 shadow-sm border ${inputText.trim() ? 'bg-white border-teal-100 text-teal-700 hover:bg-teal-50 animate-pulse' : 'text-gray-300 border-transparent cursor-not-allowed'}`}
                           >
                               {isAiPolishing ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} fill={inputText.trim() ? "currentColor" : "none"} />}
                           </button>
@@ -917,7 +917,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                         
                         <button 
                              onClick={() => setIsLiveActive(!isLiveActive)} 
-                             className={`p-2 ${!isActuallyMobile ? 'md:p-2.5' : ''} rounded-xl transition-all flex-shrink-0 shadow-sm border ${isLiveActive ? 'bg-red-700 text-white border-red-700 animate-pulse' : 'text-gray-400 border-transparent hover:text-gray-900 hover:bg-gray-100'}`}
+                             className={`p-2 ${!isActuallyMobile ? 'md:p-2.5' : ''} rounded-xl transition-all flex-shrink-0 shadow-sm border ${isLiveActive ? 'bg-teal-700 text-white border-teal-700 animate-pulse' : 'text-gray-400 border-transparent hover:text-gray-900 hover:bg-gray-100'}`}
                              title="Modo Voz (Live)"
                         >
                             <Mic size={16} />
@@ -977,7 +977,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                         >
                            {isAnalysisCopied ? <Check size={24} /> : <Copy size={24} />}
                         </button>
-                        <button onClick={() => setAnalysisToShow(null)} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-red-700 transition-all">
+                        <button onClick={() => setAnalysisToShow(null)} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-teal-700 transition-all">
                             <X size={24} />
                         </button>
                       </div>
@@ -1004,7 +1004,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg border border-gray-100 animate-in zoom-in-95 p-8 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-700 rounded-xl text-white shadow-lg">
+                <div className="p-2 bg-teal-700 rounded-xl text-white shadow-lg">
                   {modalMode === 'create' ? <UserPlus size={20} /> : <Pencil size={20} />}
                 </div>
                 <div>
@@ -1028,7 +1028,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                   type="text" 
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full bg-gray-50 border border-gray-100 p-3 rounded-2xl text-xs font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-red-700/10 focus:border-red-700 transition-all"
+                  className="w-full bg-gray-50 border border-gray-100 p-3 rounded-2xl text-xs font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-teal-700/10 focus:border-teal-700 transition-all"
                   placeholder="EJ: JUAN PÉREZ..."
                 />
               </div>
@@ -1039,7 +1039,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                     type="number" 
                     value={formData.age}
                     onChange={(e) => setFormData({...formData, age: e.target.value})}
-                    className="w-full bg-gray-50 border border-gray-100 p-3 rounded-2xl text-xs font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-red-700/10 focus:border-red-700 transition-all"
+                    className="w-full bg-gray-50 border border-gray-100 p-3 rounded-2xl text-xs font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-teal-700/10 focus:border-teal-700 transition-all"
                     placeholder="00"
                   />
                 </div>
@@ -1049,7 +1049,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                     type="text" 
                     value={formData.condition}
                     onChange={(e) => setFormData({...formData, condition: e.target.value})}
-                    className="w-full bg-gray-50 border border-gray-100 p-3 rounded-2xl text-xs font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-red-700/10 focus:border-red-700 transition-all"
+                    className="w-full bg-gray-50 border border-gray-100 p-3 rounded-2xl text-xs font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-teal-700/10 focus:border-teal-700 transition-all"
                     placeholder="Pie Diabético..."
                   />
                 </div>
@@ -1062,7 +1062,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                         type="text" 
                         value={formData.insurance}
                         onChange={(e) => setFormData({...formData, insurance: e.target.value})}
-                        className="w-full bg-gray-50 border border-gray-100 p-3 rounded-2xl text-xs font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-red-700/10 focus:border-red-700 transition-all"
+                        className="w-full bg-gray-50 border border-gray-100 p-3 rounded-2xl text-xs font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-teal-700/10 focus:border-teal-700 transition-all"
                         placeholder="Sanitas, Mapfre..."
                     />
                   </div>
@@ -1072,7 +1072,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                         type="text" 
                         value={formData.fileNumber}
                         onChange={(e) => setFormData({...formData, fileNumber: e.target.value})}
-                        className="w-full bg-gray-50 border border-gray-100 p-3 rounded-2xl text-xs font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-red-700/10 focus:border-red-700 transition-all"
+                        className="w-full bg-gray-50 border border-gray-100 p-3 rounded-2xl text-xs font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-teal-700/10 focus:border-teal-700 transition-all"
                         placeholder="EXP-2024..."
                     />
                   </div>
@@ -1105,7 +1105,7 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
         .custom-scrollbar::-webkit-scrollbar { width: 3px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #ef4444; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #0f766e; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>

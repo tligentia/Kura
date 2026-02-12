@@ -44,8 +44,8 @@ export const Security: React.FC<Props> = ({ onLogin }) => {
     <div className="fixed inset-0 bg-white z-[999] flex flex-col justify-center items-center font-sans">
       <div className={`max-w-xs w-full px-6 flex flex-col items-center transition-transform ${error ? 'animate-shake' : ''}`}>
         <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full border-2 border-red-700 mb-4">
-             <span className="text-red-700 font-black text-xl">GO</span>
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full border-2 border-teal-700 mb-4">
+             <span className="text-teal-700 font-black text-xl">GO</span>
           </div>
           <h2 className="text-xl font-black text-gray-900 tracking-tight uppercase">Seguridad</h2>
           <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">Acceso restringido</p>
@@ -69,7 +69,7 @@ export const Security: React.FC<Props> = ({ onLogin }) => {
           ))}
         </div>
 
-        <button onClick={handleBackspace} className="text-[10px] font-bold text-gray-400 hover:text-red-700 uppercase tracking-wider transition-colors">Borrar Entrada</button>
+        <button onClick={handleBackspace} className="text-[10px] font-bold text-gray-400 hover:text-teal-700 uppercase tracking-wider transition-colors">Borrar Entrada</button>
         
         {/* WARNING MESSAGE */}
         <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-xl w-full text-center">
@@ -77,9 +77,9 @@ export const Security: React.FC<Props> = ({ onLogin }) => {
                 <AlertTriangle size={20} />
             </div>
             <p className="text-[9px] font-bold text-yellow-800 uppercase leading-relaxed tracking-wide">
-                Maqueta en fase de desarrollo, estudio y ajustes.
+                Entorno Clínico en fase de validación.
                 <br/>
-                <span className="text-red-600 font-black">Que nunca debe utilizarse en casos reales.</span>
+                <span className="text-red-600 font-black">Uso exclusivo personal autorizado.</span>
             </p>
         </div>
 

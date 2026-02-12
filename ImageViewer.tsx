@@ -336,7 +336,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
 
           if (necroPct > 15) { label = 'Necrosis'; color = '#000000'; }
           else if (sloughPct > 20) { label = 'Esfacelo'; color = '#fbbf24'; }
-          else if (granPct > 20) { label = 'Granulación'; color = '#ef4444'; }
+          else if (granPct > 20) { label = 'Granulación'; color = '#ef4444'; } // Red is clinically accurate here
 
           return {
               id: Date.now(),
@@ -482,7 +482,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
       {/* HEADER TOOLBAR */}
       <div className="h-16 border-b border-gray-100 flex justify-between items-center px-6 bg-white z-20 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="p-2 bg-red-700 rounded-lg text-white shadow-md">
+          <div className="p-2 bg-teal-700 rounded-lg text-white shadow-md">
             <Eye size={20} />
           </div>
           <div>
@@ -501,7 +501,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
            <div className="hidden md:flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100 mr-4">
               <span className="text-[9px] font-bold text-gray-400 uppercase px-2">Zoom: {Math.round(scale * 100)}%</span>
            </div>
-           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-red-700 transition-colors">
+           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-teal-700 transition-colors">
             <X size={24} />
           </button>
         </div>
@@ -522,7 +522,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
           <div 
             className="absolute inset-0 z-10 pointer-events-none opacity-20"
             style={{
-                backgroundImage: `linear-gradient(#ef4444 1px, transparent 1px), linear-gradient(90deg, #ef4444 1px, transparent 1px)`,
+                backgroundImage: `linear-gradient(#0f766e 1px, transparent 1px), linear-gradient(90deg, #0f766e 1px, transparent 1px)`,
                 backgroundSize: `${20 * scale}px ${20 * scale}px`
             }}
           />
@@ -554,16 +554,16 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
                   const mmLength = referenceRatio ? (line.lengthPx / referenceRatio).toFixed(1) + ' mm' : Math.round(line.lengthPx) + ' px';
                   return (
                     <g key={line.id}>
-                        <line x1={line.start.x} y1={line.start.y} x2={line.end.x} y2={line.end.y} stroke="#ef4444" strokeWidth={2 / scale} />
-                        <circle cx={line.start.x} cy={line.start.y} r={3 / scale} fill="#ef4444" />
-                        <circle cx={line.end.x} cy={line.end.y} r={3 / scale} fill="#ef4444" />
+                        <line x1={line.start.x} y1={line.start.y} x2={line.end.x} y2={line.end.y} stroke="#0f766e" strokeWidth={2 / scale} />
+                        <circle cx={line.start.x} cy={line.start.y} r={3 / scale} fill="#0f766e" />
+                        <circle cx={line.end.x} cy={line.end.y} r={3 / scale} fill="#0f766e" />
                         <rect x={(line.start.x + line.end.x) / 2 - 20 / scale} y={(line.start.y + line.end.y) / 2 - 10 / scale} width={50 / scale} height={14 / scale} rx={4 / scale} fill="rgba(0,0,0,0.8)" />
                         <text x={(line.start.x + line.end.x) / 2} y={(line.start.y + line.end.y) / 2} dy={3 / scale} textAnchor="middle" fill="white" fontSize={8 / scale} fontWeight="bold">{mmLength}</text>
                     </g>
                   );
               })}
               {activeTool === 'measure' && currentLine && tempEndPoint && (
-                  <line x1={currentLine.x} y1={currentLine.y} x2={tempEndPoint.x} y2={tempEndPoint.y} stroke="#ef4444" strokeWidth={2 / scale} strokeDasharray={4 / scale} />
+                  <line x1={currentLine.x} y1={currentLine.y} x2={tempEndPoint.x} y2={tempEndPoint.y} stroke="#0f766e" strokeWidth={2 / scale} strokeDasharray={4 / scale} />
               )}
 
               {/* POLYGONS (AREA) */}
@@ -582,7 +582,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
 
                   return (
                       <g key={poly.id}>
-                          <polygon points={pointsStr} fill="rgba(239, 68, 68, 0.2)" stroke="#ef4444" strokeWidth={2 / scale} />
+                          <polygon points={pointsStr} fill="rgba(15, 118, 110, 0.2)" stroke="#0f766e" strokeWidth={2 / scale} />
                           <rect x={center.x - 30 / scale} y={center.y - 8 / scale} width={60 / scale} height={16 / scale} rx={4 / scale} fill="rgba(0,0,0,0.8)" />
                           <text x={center.x} y={center.y} dy={4 / scale} textAnchor="middle" fill="white" fontSize={8 / scale} fontWeight="bold">#{idx+1} {areaLabel}</text>
                       </g>
@@ -592,9 +592,9 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
               {/* CURRENT DRAWING POLYGON */}
               {activeTool === 'area' && currentPolyPoints.length > 0 && (
                   <g>
-                      <polyline points={currentPolyPoints.map(p => `${p.x},${p.y}`).join(' ')} fill="none" stroke="#ef4444" strokeWidth={2 / scale} strokeDasharray={4 / scale} />
+                      <polyline points={currentPolyPoints.map(p => `${p.x},${p.y}`).join(' ')} fill="none" stroke="#0f766e" strokeWidth={2 / scale} strokeDasharray={4 / scale} />
                       {currentPolyPoints.map((p, i) => (
-                          <circle key={i} cx={p.x} cy={p.y} r={3 / scale} fill={i === 0 ? "#22c55e" : "white"} stroke="#ef4444" strokeWidth={1} />
+                          <circle key={i} cx={p.x} cy={p.y} r={3 / scale} fill={i === 0 ? "#22c55e" : "white"} stroke="#0f766e" strokeWidth={1} />
                       ))}
                   </g>
               )}
@@ -680,8 +680,8 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-4 rounded-2xl shadow-2xl border border-gray-100 z-50 animate-in zoom-in-95 w-64">
                 <h4 className="text-xs font-black uppercase text-gray-900 mb-2">Calibrar Referencia</h4>
                 <div className="flex gap-2">
-                    <input type="number" autoFocus value={refInputVal} onChange={e => setRefInputVal(e.target.value)} placeholder="mm" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 text-xs font-bold outline-none focus:ring-1 focus:ring-red-700" />
-                    <button onClick={() => setReference(showReferenceInput)} className="bg-red-700 text-white rounded-lg px-3 py-1 text-xs font-black">OK</button>
+                    <input type="number" autoFocus value={refInputVal} onChange={e => setRefInputVal(e.target.value)} placeholder="mm" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 text-xs font-bold outline-none focus:ring-1 focus:ring-teal-700" />
+                    <button onClick={() => setReference(showReferenceInput)} className="bg-teal-700 text-white rounded-lg px-3 py-1 text-xs font-black">OK</button>
                     <button onClick={() => { setShowReferenceInput(null); setRefInputVal(''); }} className="bg-gray-100 text-gray-500 rounded-lg px-2 py-1"><X size={14} /></button>
                 </div>
             </div>
@@ -801,21 +801,21 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
                 <div className="w-px h-6 bg-gray-200 mx-1" />
                 <button 
                     onClick={() => handleToolSelect('measure')} 
-                    className={`p-2 rounded-lg transition-all ${activeTool === 'measure' ? 'bg-white text-red-700 shadow-sm' : 'text-gray-400 hover:text-gray-900'}`}
+                    className={`p-2 rounded-lg transition-all ${activeTool === 'measure' ? 'bg-white text-teal-700 shadow-sm' : 'text-gray-400 hover:text-gray-900'}`}
                     title="Regla (Calibrar)"
                 >
                     <Ruler size={18} />
                 </button>
                 <button 
                     onClick={() => handleToolSelect('area')} 
-                    className={`p-2 rounded-lg transition-all ${activeTool === 'area' ? 'bg-white text-red-700 shadow-sm' : 'text-gray-400 hover:text-gray-900'}`}
+                    className={`p-2 rounded-lg transition-all ${activeTool === 'area' ? 'bg-white text-teal-700 shadow-sm' : 'text-gray-400 hover:text-gray-900'}`}
                     title="Área (Polígono)"
                 >
                     <Pentagon size={18} />
                 </button>
                 <button 
                     onClick={() => handleToolSelect('texture')} 
-                    className={`p-2 rounded-lg transition-all ${activeTool === 'texture' ? 'bg-white text-red-700 shadow-sm' : 'text-gray-400 hover:text-gray-900'}`}
+                    className={`p-2 rounded-lg transition-all ${activeTool === 'texture' ? 'bg-white text-teal-700 shadow-sm' : 'text-gray-400 hover:text-gray-900'}`}
                     title="Analizador Textura"
                 >
                     <ScanEye size={18} />
@@ -824,9 +824,9 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
 
             {/* Adjustments Group */}
             <div className="flex items-center gap-1 bg-gray-50 p-1.5 rounded-xl border border-gray-100 hidden sm:flex">
-                 <button onClick={() => setBrightness(b => b === 100 ? 125 : (b === 125 ? 150 : 100))} className={`p-2 rounded-lg transition-all ${brightness > 100 ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`} title="Brillo"><Sun size={18} /></button>
-                 <button onClick={() => setContrast(c => c === 100 ? 125 : (c === 125 ? 150 : 100))} className={`p-2 rounded-lg transition-all ${contrast > 100 ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`} title="Contraste"><Contrast size={18} /></button>
-                 <button onClick={() => setInvert(!invert)} className={`p-2 rounded-lg transition-all ${invert ? 'bg-red-700 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`} title="Invertir"><ImageMinus size={18} /></button>
+                 <button onClick={() => setBrightness(b => b === 100 ? 125 : (b === 125 ? 150 : 100))} className={`p-2 rounded-lg transition-all ${brightness > 100 ? 'bg-white text-teal-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`} title="Brillo"><Sun size={18} /></button>
+                 <button onClick={() => setContrast(c => c === 100 ? 125 : (c === 125 ? 150 : 100))} className={`p-2 rounded-lg transition-all ${contrast > 100 ? 'bg-white text-teal-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`} title="Contraste"><Contrast size={18} /></button>
+                 <button onClick={() => setInvert(!invert)} className={`p-2 rounded-lg transition-all ${invert ? 'bg-teal-700 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`} title="Invertir"><ImageMinus size={18} /></button>
                  <button onClick={() => setGrayscale(!grayscale)} className={`p-2 rounded-lg transition-all ${grayscale ? 'bg-gray-900 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`} title="B/N"><Contrast size={18} className="rotate-90" /></button>
             </div>
 

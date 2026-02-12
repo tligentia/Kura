@@ -15,11 +15,11 @@ export const SHEET_ID = '1wJkM8rmiXCrnB0K4h9jtme0m7f5I3y1j1PX5nmEaTII';
 
 /**
  * UI Theme configuration
- * Following requirements: Fondo blanco, contenidos en Negro, rojo y gris
+ * Updated to Medical Teal theme
  */
 export const COLORS = {
   bg: 'bg-white',
-  primary: 'text-red-700',
+  primary: 'text-teal-700',
   secondary: 'text-gray-400',
   accent: 'text-gray-900',
 };
