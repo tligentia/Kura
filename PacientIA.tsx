@@ -136,6 +136,46 @@ const formatMessageTime = (isoString: string) => {
     return `${date.toLocaleDateString()} ${timeStr}`;
 };
 
+const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL(file.type === 'image/png' ? 'image/png' : 'image/jpeg', 0.8));
+        } else {
+          reject(new Error("Canvas context is null"));
+        }
+      };
+      img.onerror = reject;
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
 interface PacientIAProps {
   viewMode: 'doctor' | 'patient';
   isMobileLayout?: boolean; 
@@ -264,7 +304,11 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
   // Persist active patient selection
   useEffect(() => {
     if (activePatientId) {
-        localStorage.setItem('app_active_patient_id', activePatientId);
+        try {
+            localStorage.setItem('app_active_patient_id', activePatientId);
+        } catch (e) {
+            console.warn("Could not save active patient ID to localStorage", e);
+        }
     }
   }, [activePatientId]);
 
@@ -285,7 +329,29 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
   }, [activePatientId]);
 
   useEffect(() => {
-    localStorage.setItem('pacientia_data_v2', JSON.stringify(patients));
+    try {
+        localStorage.setItem('pacientia_data_v2', JSON.stringify(patients));
+    } catch (e) {
+        if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+            console.warn("Storage quota exceeded. Pruning old images...");
+            setPatients(prev => {
+                const newPatients = JSON.parse(JSON.stringify(prev)); // Deep clone
+                let prunedCount = 0;
+                // Prune images from the oldest messages across all patients
+                for (let i = 0; i < newPatients.length && prunedCount < 10; i++) {
+                    for (let j = 0; j < newPatients[i].messages.length && prunedCount < 10; j++) {
+                        if (newPatients[i].messages[j].imageUrl) {
+                            newPatients[i].messages[j].imageUrl = undefined;
+                            prunedCount++;
+                        }
+                    }
+                }
+                return newPatients;
+            });
+        } else {
+            console.error("Error saving patients to localStorage", e);
+        }
+    }
   }, [patients]);
 
   const prevMsgCount = useRef(activePatient?.messages.length || 0);
@@ -404,6 +470,10 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
       }
     } catch (e) {
       console.error(e);
+      setPatients(prev => prev.map(p => p.id === activePatientId ? {
+          ...p,
+          messages: p.messages.map(m => m.id === msgId ? { ...m, analysis: "### ❌ Error en Análisis\n\nNo se pudo completar el análisis de la imagen debido a un error de conexión o del servicio. Por favor, inténtelo de nuevo más tarde." } : m)
+      } : p));
     } finally {
       setIsAiAnalyzing(false);
     }
@@ -449,6 +519,13 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
         }
     } catch (e) {
         console.error("Auto response error", e);
+        const errorMsg: Message = {
+            id: (Date.now()+1).toString(),
+            role: 'ai',
+            content: "⚠️ Lo siento, ha ocurrido un error al procesar tu mensaje. Por favor, comprueba tu conexión e inténtalo de nuevo.",
+            timestamp: new Date().toISOString()
+        };
+        addMessageToPatient(activePatientId, errorMsg);
     } finally {
         setIsAiAnalyzing(false);
     }
@@ -485,46 +562,56 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
     const inputElement = e.target;
     if (!file || !activePatientId) return;
     
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64 = (reader.result as string).split(',')[1];
-      
-      // Privacy Check First
-      setIsAiAnalyzing(true);
-      setLoadingText("Verificando Privacidad...");
-      
-      const isSafe = await checkImagePrivacy(base64, file.type);
-      if (!isSafe) {
-          setIsAiAnalyzing(false);
-          const rejectionMsg: Message = {
-            id: Date.now().toString(),
-            role: 'ai',
-            content: "### 🛑 Imagen Bloqueada\n\n#### Privacidad\nEl sistema ha detectado **datos personales visibles** (texto, documentos o identificadores) en la imagen.\n\nPor cumplimiento del RGPD, solo se permite subir fotografías clínicas de la lesión.",
-            timestamp: new Date().toISOString(),
-            isAnalysis: true
-          };
-          addMessageToPatient(activePatientId, rejectionMsg);
-          if (inputElement) inputElement.value = '';
-          return;
-      }
+    try {
+        setIsAiAnalyzing(true);
+        setLoadingText("Procesando imagen...");
+        
+        // Resize image to prevent QuotaExceededError and speed up AI analysis
+        const resizedBase64Url = await resizeImage(file, 800, 800);
+        const parts = resizedBase64Url.split(',');
+        if (parts.length < 2) {
+          throw new Error("Formato de imagen inválido.");
+        }
+        const base64 = parts[1];
+        const mimeType = parts[0].split(':')[1].split(';')[0];
+        
+        // Privacy Check First
+        setLoadingText("Verificando Privacidad...");
+        
+        const isSafe = await checkImagePrivacy(base64, mimeType);
+        if (!isSafe) {
+            setIsAiAnalyzing(false);
+            const rejectionMsg: Message = {
+              id: Date.now().toString(),
+              role: 'ai',
+              content: "### 🛑 Imagen Bloqueada\n\n#### Privacidad\nEl sistema ha detectado **datos personales visibles** (texto, documentos o identificadores) en la imagen.\n\nPor cumplimiento del RGPD, solo se permite subir fotografías clínicas de la lesión.",
+              timestamp: new Date().toISOString(),
+              isAnalysis: true
+            };
+            addMessageToPatient(activePatientId, rejectionMsg);
+            if (inputElement) inputElement.value = '';
+            return;
+        }
 
-      setLoadingText("Analizando Clínica...");
-      const msgId = Date.now().toString();
-      
-      const newMsg: Message = {
-        id: msgId,
-        role: viewMode === 'patient' ? 'patient' : 'doctor',
-        content: "Envío imagen del estado actual de la zona.",
-        timestamp: new Date().toISOString(),
-        imageUrl: reader.result as string
-      };
-      addMessageToPatient(activePatientId, newMsg);
-      // Reset input value to allow re-upload if needed
-      if (inputElement) inputElement.value = '';
-      
-      handleImageAnalysis(msgId, base64, file.type);
-    };
-    reader.readAsDataURL(file);
+        setLoadingText("Analizando Clínica...");
+        const msgId = Date.now().toString();
+        
+        const newMsg: Message = {
+          id: msgId,
+          role: viewMode === 'patient' ? 'patient' : 'doctor',
+          content: "Envío imagen del estado actual de la zona.",
+          timestamp: new Date().toISOString(),
+          imageUrl: resizedBase64Url
+        };
+        addMessageToPatient(activePatientId, newMsg);
+        // Reset input value to allow re-upload if needed
+        if (inputElement) inputElement.value = '';
+        
+        await handleImageAnalysis(msgId, base64, mimeType);
+    } catch (error) {
+        console.error("Error procesando la imagen:", error);
+        setIsAiAnalyzing(false);
+    }
   };
   
   // Handler for AI analysis triggered from viewer

@@ -83,7 +83,7 @@ const fetchAppData = async (): Promise<AppItem[]> => {
       return { name, url, visible: isVisible, fase };
     }).filter(app => app.name && isValidUrl(app.url));
   } catch (error) {
-    console.error('Error fetching apps:', error);
+    // Silent fail to avoid cluttering console in environments where Google Sheets might be blocked
     return [];
   }
 };

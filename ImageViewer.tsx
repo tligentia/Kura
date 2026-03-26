@@ -146,14 +146,21 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, onClose, vie
     img.crossOrigin = "Anonymous";
     img.src = src;
     img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-            ctx.drawImage(img, 0, 0);
-            canvasRef.current = canvas;
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.drawImage(img, 0, 0);
+                canvasRef.current = canvas;
+            }
+        } catch (e) {
+            console.error("Error drawing image to canvas", e);
         }
+    };
+    img.onerror = (e) => {
+        console.error("Error loading image for canvas", e);
     };
   }, [src]);
 

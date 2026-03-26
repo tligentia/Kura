@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Security } from './Plantilla/Seguridad';
 import { Shell } from './Plantilla/Shell';
 import { PacientIA } from './PacientIA';
+import { ErrorBoundary } from './Plantilla/ErrorBoundary';
 
 export default function App() {
   const [isAuth, setIsAuth] = useState(() => {
@@ -42,7 +43,7 @@ export default function App() {
   };
 
   return (
-    <>
+    <ErrorBoundary>
       {!isAuth && <Security onLogin={handleLoginSuccess} />}
 
       <div className={!isAuth ? 'blur-md pointer-events-none select-none opacity-50' : 'animate-in fade-in duration-700'}>
@@ -59,6 +60,6 @@ export default function App() {
           />
         </Shell>
       </div>
-    </>
+    </ErrorBoundary>
   );
 }
