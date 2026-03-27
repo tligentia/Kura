@@ -606,6 +606,19 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
         addMessageToPatient(activePatientId, newMsg);
         // Reset input value to allow re-upload if needed
         if (inputElement) inputElement.value = '';
+
+        // Confirmation message for patient
+        if (viewMode === 'patient') {
+            setTimeout(() => {
+                const confirmationMsg: Message = {
+                    id: (Date.now() + 1).toString(),
+                    role: 'ai',
+                    content: "Confirmamos la recepción de la imagen clínica. El equipo médico procederá a su revisión técnica y clínica a la mayor brevedad posible para ajustar su plan de cuidados si fuera necesario.",
+                    timestamp: new Date().toISOString()
+                };
+                addMessageToPatient(activePatientId, confirmationMsg);
+            }, 1000);
+        }
         
         await handleImageAnalysis(msgId, base64, mimeType);
     } catch (error) {
@@ -954,9 +967,11 @@ export const PacientIA: React.FC<PacientIAProps> = ({ viewMode, isMobileLayout =
                                     )}
                                     <div className={`px-5 py-3 ${!isActuallyMobile ? 'md:px-7 md:py-4' : ''} text-xs ${!isActuallyMobile ? 'md:text-sm' : ''} font-medium leading-relaxed relative group ${bubbleStyle}`}>
                                         <FormattedText text={m.content} />
-                                        <span className={`text-[9px] font-bold absolute -bottom-5 ${isMe ? 'right-2' : 'left-2'} text-gray-300 uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity`}>
-                                            {formatMessageTime(m.timestamp)}
-                                        </span>
+                                        <div className={`mt-1.5 flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                            <span className="text-[8px] font-light uppercase tracking-widest text-gray-400/60 whitespace-nowrap">
+                                                {formatMessageTime(m.timestamp)}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
